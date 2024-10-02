@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
+import { usePathname } from "next/navigation";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -10,6 +11,7 @@ interface LayoutProps {
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
     const handleResize = () => {
@@ -33,6 +35,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         expanded={sidebarExpanded}
         isMobile={isMobile}
         toggleSidebar={toggleSidebar}
+        currentPath={pathname}
       />
       <div className="flex flex-col flex-1 overflow-hidden">
         <Header toggleSidebar={toggleSidebar} />
