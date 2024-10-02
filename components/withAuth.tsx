@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useUser } from "@/hooks/useUser"; // Adjust the path as necessary
-
+import { useUser } from "@/hooks/useUser";
 const AuthWrapper = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
   const { user, loading } = useUser();
@@ -11,13 +10,13 @@ const AuthWrapper = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     if (!loading) {
-      // if (!user) {
-      //   router.replace("/");
-      // } else if (user.type !== "admin") {
-      //   setIsAuthorized(false);
-      // } else {
-      setIsAuthorized(true);
-      // }
+      if (!user) {
+        router.replace("/");
+      } else if (user.type !== "admin") {
+        setIsAuthorized(false);
+      } else {
+        setIsAuthorized(true);
+      }
     }
   }, [user, loading, router]);
 
