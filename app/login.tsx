@@ -75,12 +75,12 @@ const LoginPage: React.FC = () => {
       const result = await signInWithCredential(auth, credential);
       const firebaseUser = result.user;
       const idToken = await firebaseUser.getIdToken();
-      console.log(idToken);
 
       const userData = await login(idToken);
       if (userData && userData.accessToken) {
         localStorage.setItem("accessToken", userData.accessToken);
         localStorage.setItem("refreshToken", userData.refreshToken);
+        console.log("Access token:", userData.accessToken);
         router.push("/dashboard");
       } else {
         setError("Failed to authenticate. Please try again.");
