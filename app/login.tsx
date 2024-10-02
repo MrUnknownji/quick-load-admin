@@ -77,6 +77,7 @@ const LoginPage: React.FC = () => {
       const idToken = await firebaseUser.getIdToken();
 
       const userData = await login(idToken);
+      console.log("userData", userData);
       if (userData && userData.accessToken) {
         localStorage.setItem("accessToken", userData.accessToken);
         localStorage.setItem("refreshToken", userData.refreshToken);

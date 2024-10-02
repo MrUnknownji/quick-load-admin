@@ -12,7 +12,7 @@ const AuthWrapper = ({ children }: { children: React.ReactNode }) => {
     if (!loading) {
       if (!user) {
         router.replace("/");
-      } else if (user.type !== "admin") {
+      } else if (user.type.toLowerCase() !== "admin") {
         setIsAuthorized(false);
       } else {
         setIsAuthorized(true);
