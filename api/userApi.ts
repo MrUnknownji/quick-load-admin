@@ -17,9 +17,9 @@ export const editUserProfile = async (userId: string, userData: FormData) => {
   return response.data.user;
 };
 
-export const loginUser = async (accessToken: string) => {
+export const loginUser = async (firebaseToken: string) => {
   const response = await apiClient.post("/user/firebase-login", {
-    access_token: accessToken,
+    access_token: firebaseToken,
   });
   return response.data;
 };

@@ -1,44 +1,93 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faUser, faLock } from "@fortawesome/free-solid-svg-icons";
+import { faPhone, faLock } from "@fortawesome/free-solid-svg-icons";
 import Image from "next/image";
-// import { useUser } from "../hooks/useUser";
-// import { apiClient } from "../api/apiClient";
+import { useUser } from "../hooks/useUser";
+import { auth, initializeRecaptcha } from "../firebase/firebaseConfig";
+import {
+  signInWithPhoneNumber,
+  PhoneAuthProvider,
+  signInWithCredential,
+} from "firebase/auth";
 
 const LoginPage: React.FC = () => {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
+  const [verificationId, setVerificationId] = useState("");
+  const [showOtpInput, setShowOtpInput] = useState(false);
   const router = useRouter();
-  // const { login } = useUser();
+  const { login } = useUser();
+
+  useEffect(() => {
+    const recaptchaId = "recaptcha-container";
+    if (!document.getElementById(recaptchaId)) {
+      const container = document.createElement("div");
+      container.id = recaptchaId;
+      document.body.appendChild(container);
+    }
+
+    const recaptchaVerifier = initializeRecaptcha(recaptchaId);
+
+    return () => {
+      recaptchaVerifier.clear();
+      const container = document.getElementById(recaptchaId);
+      if (container) {
+        container.remove();
+      }
+    };
+  }, []);
+
+  const handlePhoneNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, "").slice(0, 10);
+    setPhoneNumber(value);
+  };
+
+  const handleOtpChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, "").slice(0, 6);
+    setOtp(value);
+  };
+
+  const handleSendOtp = async () => {
+    try {
+      const phoneNumberWithCountryCode = `+91${phoneNumber}`;
+      const recaptchaVerifier = initializeRecaptcha("recaptcha-container");
+      const confirmationResult = await signInWithPhoneNumber(
+        auth,
+        phoneNumberWithCountryCode,
+        recaptchaVerifier,
+      );
+      setVerificationId(confirmationResult.verificationId);
+      setShowOtpInput(true);
+    } catch (err) {
+      console.error("Error sending OTP:", err);
+      setError("Failed to send OTP. Please try again.");
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
     try {
-      // const response = await apiClient.post("/auth/login", {
-      //   username,
-      //   password,
-      // });
-      // const { accessToken, refreshToken } = response.data;
+      const credential = PhoneAuthProvider.credential(verificationId, otp);
+      const result = await signInWithCredential(auth, credential);
+      const firebaseUser = result.user;
+      const idToken = await firebaseUser.getIdToken();
+      console.log(idToken);
 
-      // Store tokens in localStorage
-      // localStorage.setItem("accessToken", accessToken);
-      // localStorage.setItem("refreshToken", refreshToken);
-
-      // Use the login function from useUser hook
-      // const loggedInUser = await login(accessToken);
-
-      // if (loggedInUser) {
-      router.push("/dashboard");
-      // } else {
-      // setError("Failed to login. Please try again.");
-      // }
+      const userData = await login(idToken);
+      if (userData && userData.accessToken) {
+        localStorage.setItem("accessToken", userData.accessToken);
+        localStorage.setItem("refreshToken", userData.refreshToken);
+        router.push("/dashboard");
+      } else {
+        setError("Failed to authenticate. Please try again.");
+      }
     } catch (err) {
       console.error("Login error:", err);
-      setError("Invalid username or password. Please try again.");
+      setError("Invalid OTP or authentication failed. Please try again.");
     }
   };
 
@@ -64,53 +113,81 @@ const LoginPage: React.FC = () => {
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label
-              htmlFor="username"
+              htmlFor="phoneNumber"
               className="block mb-2 text-sm font-medium text-gray-700"
             >
-              Username
+              Phone Number
             </label>
             <div className="relative">
               <input
-                type="text"
-                id="username"
+                type="tel"
+                id="phoneNumber"
                 className="w-full pl-10 pr-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#3c0b0b] focus:border-transparent"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                value={phoneNumber}
+                onChange={handlePhoneNumberChange}
                 required
+                disabled={showOtpInput}
               />
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <FontAwesomeIcon icon={faUser} className="text-gray-400" />
+                <FontAwesomeIcon icon={faPhone} className="text-gray-400" />
               </div>
             </div>
           </div>
-          <div className="mb-6">
-            <label
-              htmlFor="password"
-              className="block mb-2 text-sm font-medium text-gray-700"
+          {!showOtpInput && (
+            <button
+              type="button"
+              onClick={handleSendOtp}
+              className={`w-full font-semibold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3c0b0b] focus:ring-opacity-50 transition duration-300 ease-in-out ${
+                phoneNumber.length === 10
+                  ? "bg-[#3c0b0b] text-white hover:bg-[#4c1b1b]"
+                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
+              }`}
+              disabled={phoneNumber.length !== 10}
             >
-              Password
-            </label>
-            <div className="relative">
-              <input
-                type="password"
-                id="password"
-                className="w-full pl-10 pr-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#3c0b0b] focus:border-transparent"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <FontAwesomeIcon icon={faLock} className="text-gray-400" />
+              Send OTP
+            </button>
+          )}
+          {showOtpInput && (
+            <div className="mb-6">
+              <label
+                htmlFor="otp"
+                className="block mb-2 text-sm font-medium text-gray-700"
+              >
+                OTP
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  id="otp"
+                  className="w-full pl-10 pr-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#3c0b0b] focus:border-transparent"
+                  value={otp}
+                  onChange={handleOtpChange}
+                  required
+                />
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FontAwesomeIcon icon={faLock} className="text-gray-400" />
+                </div>
               </div>
             </div>
-          </div>
-          <button
-            type="submit"
-            className="w-full bg-[#3c0b0b] text-white font-semibold py-2 px-4 rounded-md hover:bg-[#4c1b1b] focus:outline-none focus:ring-2 focus:ring-[#3c0b0b] focus:ring-opacity-50 transition duration-300 ease-in-out"
-          >
-            Log In
-          </button>
+          )}
+          {showOtpInput && (
+            <button
+              type="submit"
+              id="sign-in-button"
+              className={`w-full font-semibold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3c0b0b] focus:ring-opacity-50 transition duration-300 ease-in-out ${
+                otp.length === 6
+                  ? "bg-[#3c0b0b] text-white hover:bg-[#4c1b1b]"
+                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
+              }`}
+              disabled={otp.length !== 6}
+            >
+              Log In
+            </button>
+          )}
         </form>
+        {error && (
+          <div className="mt-4 text-red-500 text-sm text-center">{error}</div>
+        )}
       </div>
     </div>
   );

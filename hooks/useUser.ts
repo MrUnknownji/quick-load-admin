@@ -60,13 +60,17 @@ export const useUser = () => {
     [],
   );
 
-  const login = useCallback(async (accessToken: string) => {
+  const login = useCallback(async (firebaseToken: string) => {
     setLoading(true);
     setError(null);
     try {
-      const loggedInUser = await loginUserAccount(accessToken);
+      const {
+        user: loggedInUser,
+        accessToken,
+        refreshToken,
+      } = await loginUserAccount(firebaseToken);
       setUser(loggedInUser);
-      return loggedInUser;
+      return { user: loggedInUser, accessToken, refreshToken };
     } catch (err) {
       console.error("Error logging in:", err);
       setError("Failed to login");

@@ -22,10 +22,14 @@ export const updateUserProfile = async (
   return await editUserProfile(userId, userData);
 };
 
-export const loginUserAccount = async (accessToken: string): Promise<User> => {
-  return await loginUser(accessToken);
+export const loginUserAccount = async (
+  firebaseToken: string,
+): Promise<{ user: User; accessToken: string; refreshToken: string }> => {
+  return await loginUser(firebaseToken);
 };
 
-export const refreshUserToken = async (refreshToken: string): Promise<any> => {
+export const refreshUserToken = async (
+  refreshToken: string,
+): Promise<{ accessToken: string; refreshToken: string }> => {
   return await refreshTokenApi(refreshToken);
 };
