@@ -11,13 +11,13 @@ const AuthWrapper = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     if (!loading) {
-      if (!user) {
-        router.replace("/");
-      } else if (user.type !== "admin") {
-        setIsAuthorized(false);
-      } else {
-        setIsAuthorized(true);
-      }
+      // if (!user) {
+      //   router.replace("/");
+      // } else if (user.type !== "admin") {
+      //   setIsAuthorized(false);
+      // } else {
+      setIsAuthorized(true);
+      // }
     }
   }, [user, loading, router]);
 

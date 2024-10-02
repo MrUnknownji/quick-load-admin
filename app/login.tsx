@@ -3,39 +3,39 @@ import { useRouter } from "next/navigation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUser, faLock } from "@fortawesome/free-solid-svg-icons";
 import Image from "next/image";
-import { useUser } from "../hooks/useUser";
-import { apiClient } from "../api/apiClient";
+// import { useUser } from "../hooks/useUser";
+// import { apiClient } from "../api/apiClient";
 
 const LoginPage: React.FC = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const router = useRouter();
-  const { login } = useUser();
+  // const { login } = useUser();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
     try {
-      const response = await apiClient.post("/auth/login", {
-        username,
-        password,
-      });
-      const { accessToken, refreshToken } = response.data;
+      // const response = await apiClient.post("/auth/login", {
+      //   username,
+      //   password,
+      // });
+      // const { accessToken, refreshToken } = response.data;
 
       // Store tokens in localStorage
-      localStorage.setItem("accessToken", accessToken);
-      localStorage.setItem("refreshToken", refreshToken);
+      // localStorage.setItem("accessToken", accessToken);
+      // localStorage.setItem("refreshToken", refreshToken);
 
       // Use the login function from useUser hook
-      const loggedInUser = await login(accessToken);
+      // const loggedInUser = await login(accessToken);
 
-      if (loggedInUser) {
-        router.push("/dashboard");
-      } else {
-        setError("Failed to login. Please try again.");
-      }
+      // if (loggedInUser) {
+      router.push("/dashboard");
+      // } else {
+      // setError("Failed to login. Please try again.");
+      // }
     } catch (err) {
       console.error("Login error:", err);
       setError("Invalid username or password. Please try again.");
