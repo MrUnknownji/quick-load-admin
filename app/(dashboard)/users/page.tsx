@@ -1,21 +1,20 @@
 "use client";
-import React, { useState } from "react";
-import { Eye, ChevronLeft, ChevronRight, X } from "lucide-react";
-import { USERS } from "@/utils/dummyData";
+import React, { useState, useEffect, useMemo } from "react";
+import {
+  Eye,
+  ChevronLeft,
+  ChevronRight,
+  X,
+  SortAsc,
+  SortDesc,
+} from "lucide-react";
 import Link from "next/link";
-
-interface User {
-  name: string;
-  role: string;
-  phone: string;
-  address: string;
-  currentLocation: string;
-  verified: boolean;
-}
+import { useUser } from "@/hooks/useUser";
+import { User } from "@/types/User";
 
 interface UserCardProps {
   title: string;
-  count: string;
+  count: number;
 }
 
 interface UserTableProps {
@@ -29,20 +28,63 @@ interface PaginationProps {
 }
 
 const UsersPage: React.FC = () => {
+  const { getUsers, loading, error } = useUser();
+  const [users, setUsers] = useState<User[]>([]);
   const [selectedTab, setSelectedTab] = useState("All User");
   const [currentPage, setCurrentPage] = useState(1);
+  const [sortByVerified, setSortByVerified] = useState<"asc" | "desc">("asc");
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      const fetchedUsers = await getUsers();
+      setUsers(fetchedUsers);
+    };
+    fetchUsers();
+  }, [getUsers]);
+
+  const filteredUsers = useMemo(() => {
+    let filtered = users;
+    if (selectedTab !== "All User") {
+      filtered = users.filter(
+        (user) => user.type.toLowerCase() === selectedTab.toLowerCase(),
+      );
+    }
+    return filtered.sort((a, b) => {
+      if (sortByVerified === "asc") {
+        return Number(b.isVerified) - Number(a.isVerified);
+      } else {
+        return Number(a.isVerified) - Number(b.isVerified);
+      }
+    });
+  }, [users, selectedTab, sortByVerified]);
+
+  const paginatedUsers = useMemo(() => {
+    const startIndex = (currentPage - 1) * 10;
+    return filteredUsers.slice(startIndex, startIndex + 10);
+  }, [filteredUsers, currentPage]);
+
+  const totalPages = Math.ceil(filteredUsers.length / 10);
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
 
   return (
     <div className="p-6 min-h-screen animate-fadeIn">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-6">
-        <UserCard title="All User" count="1000" />
-        <UserCard title="Verified" count="807" />
-        <UserCard title="Unverified" count="193" />
+        <UserCard title="All User" count={users.length} />
+        <UserCard
+          title="Verified"
+          count={users.filter((user) => user.isVerified).length}
+        />
+        <UserCard
+          title="Unverified"
+          count={users.filter((user) => !user.isVerified).length}
+        />
       </div>
 
       <div className="bg-white rounded-lg shadow p-4 sm:p-6 animate-slideUp">
         <div className="flex flex-wrap gap-2 mb-4">
-          {["All User", "Marchent", "Driver", "Merchant-Driver"].map((tab) => (
+          {["All User", "Merchant", "Driver", "Merchant-Driver"].map((tab) => (
             <button
               key={tab}
               onClick={() => setSelectedTab(tab)}
@@ -69,10 +111,26 @@ const UsersPage: React.FC = () => {
           ))}
         </div>
 
-        <UserTable users={USERS} />
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={() =>
+              setSortByVerified((prev) => (prev === "asc" ? "desc" : "asc"))
+            }
+            className="flex items-center px-4 py-2 bg-gray-100 rounded-md hover:bg-gray-200"
+          >
+            {sortByVerified === "asc" ? (
+              <SortAsc size={18} />
+            ) : (
+              <SortDesc size={18} />
+            )}
+            <span className="ml-2">Sort by Verified</span>
+          </button>
+        </div>
+
+        <UserTable users={paginatedUsers} />
         <Pagination
           currentPage={currentPage}
-          totalPages={5}
+          totalPages={totalPages}
           onPageChange={setCurrentPage}
         />
       </div>
@@ -98,24 +156,31 @@ const UserTable: React.FC<UserTableProps> = ({ users }) => (
           <th className="text-left p-2">Role</th>
           <th className="text-left p-2">Phone Number</th>
           <th className="text-left p-2">Address/City</th>
-          <th className="text-left p-2">Current Location</th>
+          <th className="text-left p-2">Is Verified</th>
           <th className="text-left p-2">View</th>
         </tr>
       </thead>
       <tbody>
-        {users.map((user, index) => (
-          <tr key={index} className="border-b hover:bg-gray-50 animate-fadeIn">
+        {users.map((user) => (
+          <tr
+            key={user._id}
+            className="border-b hover:bg-gray-50 animate-fadeIn"
+          >
             <td className="p-2">
-              {user.name}
-              {user.verified && <span className="text-green-500 ml-1">●</span>}
+              {user.firstName} {user.lastName}
+              {user.isVerified && (
+                <span className="text-green-500 ml-1">●</span>
+              )}
             </td>
-            <td className="p-2">{user.role}</td>
+            <td className="p-2">{user.type}</td>
             <td className="p-2">{user.phone}</td>
-            <td className="p-2">{user.address}</td>
-            <td className="p-2">{user.currentLocation}</td>
+            <td className="p-2">
+              {user.address}, {user.city}
+            </td>
+            <td className="p-2">{user.isVerified ? "Yes" : "No"}</td>
             <td className="p-2">
               <Link
-                href="/users/user-info"
+                href={`/users/${user._id}`}
                 className="text-gray-600 hover:text-gray-900 transition-transform duration-200 ease-in-out transform hover:scale-110"
               >
                 <Eye size={18} />
@@ -135,7 +200,8 @@ const Pagination: React.FC<PaginationProps> = ({
 }) => (
   <div className="flex flex-col sm:flex-row justify-between items-center mt-4">
     <p className="text-sm text-gray-600 mb-2 sm:mb-0">
-      Showing data 1 to 10 of 256k entries
+      Showing data {(currentPage - 1) * 10 + 1} to{" "}
+      {Math.min(currentPage * 10, totalPages * 10)} of {totalPages * 10} entries
     </p>
     <div className="flex space-x-2">
       <button

@@ -30,3 +30,7 @@ export const refreshToken = async (refreshToken: string) => {
   });
   return response.data;
 };
+export const getAllUsers = async () => {
+  const response = await authApiClient.get("/user/list");
+  return response.data.users;
+};

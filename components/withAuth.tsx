@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/hooks/useUser";
+
 const AuthWrapper = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
   const { user, loading } = useUser();
@@ -12,10 +13,14 @@ const AuthWrapper = ({ children }: { children: React.ReactNode }) => {
     if (!loading) {
       if (!user) {
         router.replace("/");
-      } else if (user.type.toLowerCase() !== "admin") {
-        setIsAuthorized(false);
       } else {
-        setIsAuthorized(true);
+        console.log("Current user:", user); // For debugging
+        const isAdmin = user.type === "admin";
+        setIsAuthorized(isAdmin);
+
+        if (!isAdmin) {
+          console.log("User type:", user.type); // For debugging
+        }
       }
     }
   }, [user, loading, router]);
@@ -25,6 +30,7 @@ const AuthWrapper = ({ children }: { children: React.ReactNode }) => {
   }
 
   if (!isAuthorized) {
+    console.log("Access denied. User:", user); // For debugging
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
         <div className="bg-white p-8 rounded-lg shadow-md">

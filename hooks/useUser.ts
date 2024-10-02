@@ -1,17 +1,26 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   deleteUserAccount,
   getCurrentUser,
   updateUserProfile,
   loginUserAccount,
   refreshUserToken,
+  getAllUsers,
 } from "../services/userService";
 import { User } from "../types/User";
 
 export const useUser = () => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+    setLoading(false);
+  }, []);
 
   const deleteAccount = useCallback(async (userId: string) => {
     setLoading(true);
@@ -50,9 +59,11 @@ export const useUser = () => {
       try {
         const updatedUser = await updateUserProfile(userId, userData);
         setUser(updatedUser);
+        return updatedUser;
       } catch (err) {
         console.error("Error updating profile:", err);
         setError("Failed to update profile");
+        throw err;
       } finally {
         setLoading(false);
       }
@@ -69,7 +80,11 @@ export const useUser = () => {
         accessToken,
         refreshToken,
       } = await loginUserAccount(firebaseToken);
+      console.log("Logged in user:", loggedInUser);
       setUser(loggedInUser);
+      localStorage.setItem("user", JSON.stringify(loggedInUser));
+      localStorage.setItem("accessToken", accessToken);
+      localStorage.setItem("refreshToken", refreshToken);
       return { user: loggedInUser, accessToken, refreshToken };
     } catch (err) {
       console.error("Error logging in:", err);
@@ -93,6 +108,21 @@ export const useUser = () => {
     }
   }, []);
 
+  const getUsers = useCallback(async (): Promise<User[]> => {
+    setLoading(true);
+    setError(null);
+    try {
+      const users = await getAllUsers();
+      return users;
+    } catch (err) {
+      console.error("Error fetching users:", err);
+      setError("Failed to fetch users");
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   return {
     user,
     loading,
@@ -102,5 +132,6 @@ export const useUser = () => {
     updateProfile,
     login,
     refreshToken,
+    getUsers,
   };
 };

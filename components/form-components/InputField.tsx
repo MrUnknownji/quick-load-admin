@@ -2,6 +2,7 @@ import React from "react";
 
 interface InputFieldProps {
   label: string;
+  name?: string;
   type: string;
   value: string;
   readOnly?: boolean;
@@ -10,6 +11,7 @@ interface InputFieldProps {
 
 const InputField: React.FC<InputFieldProps> = ({
   label,
+  name,
   type,
   value,
   readOnly,
@@ -17,8 +19,12 @@ const InputField: React.FC<InputFieldProps> = ({
 }) => {
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700">{label}</label>
+      <label htmlFor={name} className="block text-sm font-medium text-gray-700">
+        {label}
+      </label>
       <input
+        id={name}
+        name={name}
         type={type}
         value={value}
         onChange={onChange}
