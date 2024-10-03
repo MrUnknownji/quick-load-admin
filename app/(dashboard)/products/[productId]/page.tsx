@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import InputField from "@/components/form-components/InputField";
 import SelectField from "@/components/form-components/SelectField";
@@ -9,16 +9,20 @@ import { useFetchProductById, useUpdateProduct } from "@/hooks/useFetchProduct";
 import { Product } from "@/types/Product";
 import LoadingComponent from "@/components/form-components/LoadingComponent";
 
+type UpdatedFields = Partial<Omit<Product, "productImage">> & {
+  productImage?: File;
+};
+
 export default function ProductInfo() {
   const { productId } = useParams();
   const { product, loading, error } = useFetchProductById(productId as string);
   const { updateProduct } = useUpdateProduct();
   const [isEditing, setIsEditing] = useState(false);
   const [productData, setProductData] = useState<Product | null>(null);
-  const [productImage, setProductImage] = useState<File | null>(null);
-  const [updatedFields, setUpdatedFields] = useState<Partial<Product>>({});
+  const [updatedFields, setUpdatedFields] = useState<UpdatedFields>({});
   const productTypes = ["Bajri", "Bricks", "Grit", "Cement"];
   const [updating, setUpdating] = useState(false);
+  const [imageError, setImageError] = useState("");
 
   useEffect(() => {
     if (product) {
@@ -42,16 +46,45 @@ export default function ProductInfo() {
     setUpdatedFields((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setProductImage(e.target.files[0]);
+  const validateFile = useCallback((file: File) => {
+    const validTypes = ["image/jpeg", "image/png", "image/svg+xml"];
+    const maxSize = 5 * 1024 * 1024; // 5 MB
+
+    if (!validTypes.includes(file.type)) {
+      setImageError(
+        "Invalid file type. Please upload a JPEG, PNG, or SVG image.",
+      );
+      return false;
     }
-  };
+
+    if (file.size > maxSize) {
+      setImageError("File size exceeds 5 MB limit.");
+      return false;
+    }
+
+    setImageError("");
+    return true;
+  }, []);
+
+  const handleImageChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files && e.target.files[0]) {
+        const file = e.target.files[0];
+        if (validateFile(file)) {
+          setUpdatedFields((prev) => ({ ...prev, productImage: file }));
+        } else {
+          e.target.value = ""; // Clear the file input
+        }
+      }
+    },
+    [validateFile],
+  );
 
   const toggleEdit = () => {
     setIsEditing(!isEditing);
     if (!isEditing) {
       setUpdatedFields({});
+      setImageError("");
     }
   };
 
@@ -59,17 +92,22 @@ export default function ProductInfo() {
     const formData = new FormData();
     Object.entries(updatedFields).forEach(([key, value]) => {
       if (value !== null && value !== undefined) {
-        formData.append(key, value.toString());
+        if (key === "productImage" && value instanceof File) {
+          formData.append(key, value);
+        } else {
+          formData.append(key, String(value));
+        }
       }
     });
-    if (productImage) {
-      formData.append("productImage", productImage);
-    }
     return formData;
   };
 
   const handleUpdate = async () => {
     if (!productData) return;
+    if (imageError) {
+      console.error("Please fix the image error before submitting");
+      return;
+    }
 
     setUpdating(true);
     const formData = createFormData();
@@ -79,7 +117,6 @@ export default function ProductInfo() {
       if (updatedProduct) {
         setProductData(updatedProduct);
         setIsEditing(false);
-        setProductImage(null);
         setUpdatedFields({});
       } else {
         console.error("Failed to update product: No data returned");
@@ -196,15 +233,10 @@ export default function ProductInfo() {
           <ImageComponent
             title="Product Image"
             imageUrl={productData.productImage || "/api/placeholder/400/320"}
+            onFileChange={isEditing ? handleImageChange : undefined}
+            error={imageError}
+            name="productImage"
           />
-          {isEditing && (
-            <InputField
-              label="Upload New Product Image"
-              name="productImage"
-              type="file"
-              onChange={handleImageChange}
-            />
-          )}
         </div>
       </form>
     </div>

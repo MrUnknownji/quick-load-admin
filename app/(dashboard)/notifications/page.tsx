@@ -1,9 +1,10 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   useFetchNotifications,
   useSendNotification,
+  useUpdateNotification,
 } from "@/hooks/useNotification";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -12,39 +13,80 @@ import {
   faExclamationTriangle,
   faTimes,
   faPaperPlane,
+  faEnvelope,
+  faEnvelopeOpen,
 } from "@fortawesome/free-solid-svg-icons";
 import { Notification, NotificationRequest } from "@/types/Notification";
 import LoadingComponent from "@/components/form-components/LoadingComponent";
 
 const NotificationsPage: React.FC = () => {
-  const { notifications, loading, error, fetchNotifications } =
+  const { notifications, loading, error, setNotifications, refetch } =
     useFetchNotifications();
   const {
     sendNotification,
     loading: sendLoading,
     error: sendError,
   } = useSendNotification();
+  const { updateNotification } = useUpdateNotification();
   const [newNotification, setNewNotification] = useState<NotificationRequest>({
     type: "",
     message: "",
     userId: "",
   });
   const [isFormVisible, setIsFormVisible] = useState(false);
+  const [updatingNotifications, setUpdatingNotifications] = useState<string[]>(
+    [],
+  );
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+
+  useEffect(() => {
+    if (!loading && isInitialLoad) {
+      setIsInitialLoad(false);
+    }
+  }, [loading, isInitialLoad]);
 
   const handleSendNotification = async (e: React.FormEvent) => {
     e.preventDefault();
-    await sendNotification(newNotification);
-    setNewNotification({ type: "", message: "", userId: "" });
-    fetchNotifications();
-    setIsFormVisible(false);
+    const result = await sendNotification(newNotification);
+    if (result) {
+      setNotifications((prev) => [...prev, result]);
+      setNewNotification({ type: "", message: "", userId: "" });
+      setIsFormVisible(false);
+      refetch();
+    }
   };
+
+  const handleToggleRead = useCallback(
+    async (notification: Notification) => {
+      setUpdatingNotifications((prev) => [...prev, notification._id]);
+      try {
+        const updatedNotification = await updateNotification(notification._id, {
+          isRead: !notification.isRead,
+        });
+        setNotifications(
+          (prev) =>
+            prev.map((n) =>
+              n._id === updatedNotification?._id ? updatedNotification : n,
+            ) as Notification[],
+        );
+        refetch();
+      } catch (error) {
+        console.error("Error updating notification:", error);
+      } finally {
+        setUpdatingNotifications((prev) =>
+          prev.filter((id) => id !== notification._id),
+        );
+      }
+    },
+    [updateNotification, setNotifications, refetch],
+  );
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleString();
   };
 
-  if (loading) return <LoadingComponent />;
+  if (loading && isInitialLoad) return <LoadingComponent />;
 
   if (error) {
     return (
@@ -74,7 +116,11 @@ const NotificationsPage: React.FC = () => {
             {notifications.map((notification: Notification) => (
               <li
                 key={notification._id}
-                className="p-6 hover:bg-gray-50 transition-colors"
+                className={`p-6 hover:bg-gray-50 transition-colors ${
+                  updatingNotifications.includes(notification._id)
+                    ? "opacity-50"
+                    : ""
+                }`}
               >
                 <div className="flex items-start">
                   <div className="flex-shrink-0">
@@ -94,7 +140,7 @@ const NotificationsPage: React.FC = () => {
                       {formatDate(notification.createdAt)}
                     </p>
                   </div>
-                  <div className="ml-4 flex-shrink-0">
+                  <div className="ml-4 flex-shrink-0 flex items-center">
                     <span
                       className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                         notification.isRead
@@ -104,6 +150,18 @@ const NotificationsPage: React.FC = () => {
                     >
                       {notification.isRead ? "Read" : "Unread"}
                     </span>
+                    <button
+                      onClick={() => handleToggleRead(notification)}
+                      className="ml-2 text-gray-400 hover:text-gray-600"
+                      disabled={updatingNotifications.includes(
+                        notification._id,
+                      )}
+                    >
+                      <FontAwesomeIcon
+                        icon={notification.isRead ? faEnvelope : faEnvelopeOpen}
+                        className="text-lg"
+                      />
+                    </button>
                   </div>
                 </div>
               </li>

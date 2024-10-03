@@ -3,8 +3,8 @@ import { useRouter } from "next/navigation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPhone, faLock } from "@fortawesome/free-solid-svg-icons";
 import Image from "next/image";
-import { useUser } from "../hooks/useUser";
-import { auth, initializeRecaptcha } from "../firebase/firebaseConfig";
+import { useUser } from "@/hooks/useUser";
+import { auth, initializeRecaptcha } from "@/firebase/firebaseConfig";
 import {
   signInWithPhoneNumber,
   PhoneAuthProvider,
@@ -77,11 +77,9 @@ const LoginPage: React.FC = () => {
       const idToken = await firebaseUser.getIdToken();
 
       const userData = await login(idToken);
-      console.log("userData", userData);
       if (userData && userData.accessToken) {
         localStorage.setItem("accessToken", userData.accessToken);
         localStorage.setItem("refreshToken", userData.refreshToken);
-        console.log("Access token:", userData.accessToken);
         router.push("/dashboard");
       } else {
         setError("Failed to authenticate. Please try again.");

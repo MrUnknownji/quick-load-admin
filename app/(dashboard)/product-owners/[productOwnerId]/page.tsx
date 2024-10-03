@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import InputField from "@/components/form-components/InputField";
 import SelectField from "@/components/form-components/SelectField";
@@ -14,15 +14,19 @@ import LoadingComponent from "@/components/form-components/LoadingComponent";
 
 const PRODUCT_TYPES = ["Bajri", "Bricks", "Grit", "Cement"];
 
+type UpdatedFields = Partial<Omit<ProductOwner, "shopImage">> & {
+  shopImage?: File;
+};
+
 export default function ProductOwnerInfo() {
   const { productOwnerId } = useParams();
   const { productOwners, loading, error } = useFetchProductOwners();
   const { updateProductOwner } = useUpdateProductOwner();
   const [isEditing, setIsEditing] = useState(false);
   const [ownerData, setOwnerData] = useState<ProductOwner | null>(null);
-  const [updatedFields, setUpdatedFields] = useState<Partial<ProductOwner>>({});
-  const [shopImage, setShopImage] = useState<File | null>(null);
+  const [updatedFields, setUpdatedFields] = useState<UpdatedFields>({});
   const [updating, setUpdating] = useState(false);
+  const [imageError, setImageError] = useState("");
 
   useEffect(() => {
     if (productOwners.length > 0) {
@@ -68,16 +72,45 @@ export default function ProductOwnerInfo() {
     }
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setShopImage(e.target.files[0]);
+  const validateFile = useCallback((file: File) => {
+    const validTypes = ["image/jpeg", "image/png", "image/svg+xml"];
+    const maxSize = 5 * 1024 * 1024; // 5 MB
+
+    if (!validTypes.includes(file.type)) {
+      setImageError(
+        "Invalid file type. Please upload a JPEG, PNG, or SVG image.",
+      );
+      return false;
     }
-  };
+
+    if (file.size > maxSize) {
+      setImageError("File size exceeds 5 MB limit.");
+      return false;
+    }
+
+    setImageError("");
+    return true;
+  }, []);
+
+  const handleImageChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files && e.target.files[0]) {
+        const file = e.target.files[0];
+        if (validateFile(file)) {
+          setUpdatedFields((prev) => ({ ...prev, shopImage: file }));
+        } else {
+          e.target.value = ""; // Clear the file input
+        }
+      }
+    },
+    [validateFile],
+  );
 
   const toggleEdit = () => {
     setIsEditing(!isEditing);
     if (!isEditing) {
       setUpdatedFields({});
+      setImageError("");
     }
   };
 
@@ -89,19 +122,22 @@ export default function ProductOwnerInfo() {
           value.forEach((type, index) => {
             formData.append(`productType[${index}]`, type);
           });
+        } else if (key === "shopImage" && value instanceof File) {
+          formData.append(key, value);
         } else {
-          formData.append(key, value.toString());
+          formData.append(key, String(value));
         }
       }
     });
-    if (shopImage) {
-      formData.append("shopImage", shopImage);
-    }
     return formData;
   };
 
   const handleUpdate = async () => {
     if (!ownerData) return;
+    if (imageError) {
+      console.error("Please fix the image error before submitting");
+      return;
+    }
 
     setUpdating(true);
     const formData = createFormData();
@@ -114,7 +150,6 @@ export default function ProductOwnerInfo() {
       if (updatedOwner) {
         setOwnerData(updatedOwner);
         setIsEditing(false);
-        setShopImage(null);
         setUpdatedFields({});
       } else {
         console.error("Failed to update product owner: No data returned");
@@ -256,15 +291,10 @@ export default function ProductOwnerInfo() {
           <ImageComponent
             title="Shop Image"
             imageUrl={ownerData.shopImage || "/api/placeholder/400/320"}
+            onFileChange={isEditing ? handleImageChange : undefined}
+            error={imageError}
+            name="shopImage"
           />
-          {isEditing && (
-            <InputField
-              label="Upload New Shop Image"
-              name="shopImage"
-              type="file"
-              onChange={handleImageChange}
-            />
-          )}
         </div>
 
         <div className="mb-6">

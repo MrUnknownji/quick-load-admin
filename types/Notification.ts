@@ -13,12 +13,21 @@ export interface NotificationRequest {
   userId: string;
 }
 
+export interface UpdateNotificationRequest {
+  isRead: boolean;
+}
+
 export interface NotificationResponse {
   message: string;
   notifications: Notification[];
 }
 
 export interface SendNotificationResponse {
+  message: string;
+  notification: Notification;
+}
+
+export interface UpdateNotificationResponse {
   message: string;
   notification: Notification;
 }

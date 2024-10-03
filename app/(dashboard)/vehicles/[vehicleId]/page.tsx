@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import InputField from "@/components/form-components/InputField";
 import SelectField from "@/components/form-components/SelectField";
@@ -9,20 +9,29 @@ import { useFetchVehicleById, useUpdateVehicle } from "@/hooks/useFetchVehicle";
 import { Vehicle } from "@/types/Vehicle";
 import LoadingComponent from "@/components/form-components/LoadingComponent";
 
+type UpdatedFields = Partial<
+  Omit<Vehicle, "drivingLicence" | "rc" | "panCard" | "aadharCard">
+> & {
+  drivingLicence?: File;
+  rc?: File;
+  panCard?: File;
+  aadharCard?: File;
+};
+
 export default function VehicleInfo() {
   const { vehicleId } = useParams();
   const { vehicle, loading, error } = useFetchVehicleById(vehicleId as string);
   const { updateVehicle } = useUpdateVehicle();
   const [isEditing, setIsEditing] = useState(false);
   const [vehicleData, setVehicleData] = useState<Vehicle | null>(null);
-  const [updatedFields, setUpdatedFields] = useState<Partial<Vehicle>>({});
-  const [drivingLicenceImage, setDrivingLicenceImage] = useState<File | null>(
-    null,
-  );
-  const [rcImage, setRcImage] = useState<File | null>(null);
-  const [panCardImage, setPanCardImage] = useState<File | null>(null);
-  const [aadharCardImage, setAadharCardImage] = useState<File | null>(null);
+  const [updatedFields, setUpdatedFields] = useState<UpdatedFields>({});
   const [updating, setUpdating] = useState(false);
+  const [imageErrors, setImageErrors] = useState({
+    drivingLicence: "",
+    rc: "",
+    panCard: "",
+    aadharCard: "",
+  });
 
   useEffect(() => {
     if (vehicle) {
@@ -46,29 +55,57 @@ export default function VehicleInfo() {
     setUpdatedFields((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      switch (e.target.name) {
-        case "drivingLicence":
-          setDrivingLicenceImage(e.target.files[0]);
-          break;
-        case "rc":
-          setRcImage(e.target.files[0]);
-          break;
-        case "panCard":
-          setPanCardImage(e.target.files[0]);
-          break;
-        case "aadharCard":
-          setAadharCardImage(e.target.files[0]);
-          break;
-      }
+  const validateFile = useCallback((file: File, fieldName: string) => {
+    const validTypes = ["image/jpeg", "image/png", "image/svg+xml"];
+    const maxSize = 5 * 1024 * 1024; // 5 MB
+
+    if (!validTypes.includes(file.type)) {
+      setImageErrors((prev) => ({
+        ...prev,
+        [fieldName]:
+          "Invalid file type. Please upload a JPEG, PNG, or SVG image.",
+      }));
+      return false;
     }
-  };
+
+    if (file.size > maxSize) {
+      setImageErrors((prev) => ({
+        ...prev,
+        [fieldName]: "File size exceeds 5 MB limit.",
+      }));
+      return false;
+    }
+
+    setImageErrors((prev) => ({ ...prev, [fieldName]: "" }));
+    return true;
+  }, []);
+
+  const handleImageChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files && e.target.files[0]) {
+        const file = e.target.files[0];
+        const fieldName = e.target.name as keyof typeof imageErrors;
+
+        if (validateFile(file, fieldName)) {
+          setUpdatedFields((prev) => ({ ...prev, [fieldName]: file }));
+        } else {
+          e.target.value = "";
+        }
+      }
+    },
+    [validateFile],
+  );
 
   const toggleEdit = () => {
     setIsEditing(!isEditing);
     if (!isEditing) {
       setUpdatedFields({});
+      setImageErrors({
+        drivingLicence: "",
+        rc: "",
+        panCard: "",
+        aadharCard: "",
+      });
     }
   };
 
@@ -76,19 +113,22 @@ export default function VehicleInfo() {
     const formData = new FormData();
     Object.entries(updatedFields).forEach(([key, value]) => {
       if (value !== null && value !== undefined) {
-        formData.append(key, value.toString());
+        if (value instanceof File) {
+          formData.append(key, value);
+        } else {
+          formData.append(key, String(value));
+        }
       }
     });
-    if (drivingLicenceImage)
-      formData.append("drivingLicence", drivingLicenceImage);
-    if (rcImage) formData.append("rc", rcImage);
-    if (panCardImage) formData.append("panCard", panCardImage);
-    if (aadharCardImage) formData.append("aadharCard", aadharCardImage);
     return formData;
   };
 
   const handleUpdate = async () => {
     if (!vehicleData) return;
+    if (Object.values(imageErrors).some((error) => error !== "")) {
+      console.error("Please fix all errors before submitting");
+      return;
+    }
 
     setUpdating(true);
     const formData = createFormData();
@@ -98,10 +138,6 @@ export default function VehicleInfo() {
       if (updatedVehicle) {
         setVehicleData(updatedVehicle);
         setIsEditing(false);
-        setDrivingLicenceImage(null);
-        setRcImage(null);
-        setPanCardImage(null);
-        setAadharCardImage(null);
         setUpdatedFields({});
       } else {
         console.error("Failed to update vehicle: No data returned");
@@ -191,67 +227,37 @@ export default function VehicleInfo() {
         </div>
 
         <div className="grid grid-cols-2 gap-6 mb-6">
-          <div>
-            <ImageComponent
-              title="Driving Licence"
-              imageUrl={
-                vehicleData.drivingLicence || "/api/placeholder/400/320"
-              }
-            />
-            {isEditing && (
-              <InputField
-                label="Upload New Driving Licence"
-                name="drivingLicence"
-                type="file"
-                onChange={handleImageChange}
-              />
-            )}
-          </div>
-          <div>
-            <ImageComponent
-              title="RC Document"
-              imageUrl={vehicleData.rc || "/api/placeholder/400/320"}
-            />
-            {isEditing && (
-              <InputField
-                label="Upload New RC Document"
-                name="rc"
-                type="file"
-                onChange={handleImageChange}
-              />
-            )}
-          </div>
+          <ImageComponent
+            title="Driving Licence"
+            imageUrl={vehicleData.drivingLicence || "/api/placeholder/400/320"}
+            onFileChange={isEditing ? handleImageChange : undefined}
+            error={imageErrors.drivingLicence}
+            name="drivingLicence"
+          />
+          <ImageComponent
+            title="RC Document"
+            imageUrl={vehicleData.rc || "/api/placeholder/400/320"}
+            onFileChange={isEditing ? handleImageChange : undefined}
+            error={imageErrors.rc}
+            name="rc"
+          />
         </div>
 
         <div className="grid grid-cols-2 gap-6 mb-6">
-          <div>
-            <ImageComponent
-              title="PAN Card"
-              imageUrl={vehicleData.panCard || "/api/placeholder/400/320"}
-            />
-            {isEditing && (
-              <InputField
-                label="Upload New PAN Card"
-                name="panCard"
-                type="file"
-                onChange={handleImageChange}
-              />
-            )}
-          </div>
-          <div>
-            <ImageComponent
-              title="Aadhar Card"
-              imageUrl={vehicleData.aadharCard || "/api/placeholder/400/320"}
-            />
-            {isEditing && (
-              <InputField
-                label="Upload New Aadhar Card"
-                name="aadharCard"
-                type="file"
-                onChange={handleImageChange}
-              />
-            )}
-          </div>
+          <ImageComponent
+            title="PAN Card"
+            imageUrl={vehicleData.panCard || "/api/placeholder/400/320"}
+            onFileChange={isEditing ? handleImageChange : undefined}
+            error={imageErrors.panCard}
+            name="panCard"
+          />
+          <ImageComponent
+            title="Aadhar Card"
+            imageUrl={vehicleData.aadharCard || "/api/placeholder/400/320"}
+            onFileChange={isEditing ? handleImageChange : undefined}
+            error={imageErrors.aadharCard}
+            name="aadharCard"
+          />
         </div>
       </form>
     </div>

@@ -13,21 +13,19 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
   const pathname = usePathname();
   const router = useRouter();
-  const { notifications, fetchNotifications } = useFetchNotifications();
+  const { notifications, refetch } = useFetchNotifications();
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
-    fetchNotifications();
-  });
+    const count = notifications.filter(
+      (notification) => !notification.isRead,
+    ).length;
+    setUnreadCount(count);
+  }, [notifications]);
 
   useEffect(() => {
-    if (notifications) {
-      const count = notifications.filter(
-        (notification) => !notification.isRead,
-      ).length;
-      setUnreadCount(count);
-    }
-  }, [notifications]);
+    refetch();
+  }, [refetch, pathname]);
 
   const getBreadcrumb = () => {
     const path = pathname.split("/").filter((item) => item);

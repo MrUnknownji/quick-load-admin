@@ -1,5 +1,9 @@
 import { apiClient, authApiClient } from "./apiClient";
-import { Notification, NotificationRequest } from "@/types/Notification";
+import {
+  Notification,
+  NotificationRequest,
+  UpdateNotificationRequest,
+} from "@/types/Notification";
 
 export const fetchNotifications = async (): Promise<Notification[]> => {
   const response = await authApiClient.get("/notifications/get");
@@ -12,6 +16,17 @@ export const sendNotification = async (
   const response = await apiClient.post(
     "/notifications/send",
     notificationData,
+  );
+  return response.data.notification;
+};
+
+export const updateNotification = async (
+  notificationId: string,
+  updateData: UpdateNotificationRequest,
+): Promise<Notification> => {
+  const response = await authApiClient.put(
+    `/notifications/update/${notificationId}`,
+    updateData,
   );
   return response.data.notification;
 };
