@@ -173,7 +173,7 @@ const VehicleTable: React.FC<VehicleTableProps> = ({ vehicles }) => (
             <td className="p-2">{vehicle.isVerified ? "Yes" : "No"}</td>
             <td className="p-2">
               <Link
-                href={`/vehicles/${vehicle.vehicleId}`}
+                href={`/vehicles/${vehicle._id}`}
                 className="text-gray-600 hover:text-gray-900 transition-transform duration-200 ease-in-out transform hover:scale-110"
               >
                 <Eye size={18} />

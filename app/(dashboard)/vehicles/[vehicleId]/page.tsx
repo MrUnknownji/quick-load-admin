@@ -232,14 +232,20 @@ export default function VehicleInfo() {
         <div className="grid grid-cols-2 gap-6 mb-6">
           <ImageComponent
             title="Driving Licence"
-            imageUrl={vehicleData.drivingLicence || "/api/placeholder/400/320"}
+            imageUrl={
+              `https://quick-load.onrender.com/${vehicleData.drivingLicence}` ||
+              "/api/placeholder/400/320"
+            }
             onFileChange={isEditing ? handleImageChange : undefined}
             error={imageErrors.drivingLicence}
             name="drivingLicence"
           />
           <ImageComponent
             title="RC Document"
-            imageUrl={vehicleData.rc || "/api/placeholder/400/320"}
+            imageUrl={
+              `https://quick-load.onrender.com/${vehicleData.rc}` ||
+              "/api/placeholder/400/320"
+            }
             onFileChange={isEditing ? handleImageChange : undefined}
             error={imageErrors.rc}
             name="rc"
@@ -249,14 +255,20 @@ export default function VehicleInfo() {
         <div className="grid grid-cols-2 gap-6 mb-6">
           <ImageComponent
             title="PAN Card"
-            imageUrl={vehicleData.panCard || "/api/placeholder/400/320"}
+            imageUrl={
+              `https://quick-load.onrender.com/${vehicleData.panCard}` ||
+              "/api/placeholder/400/320"
+            }
             onFileChange={isEditing ? handleImageChange : undefined}
             error={imageErrors.panCard}
             name="panCard"
           />
           <ImageComponent
             title="Aadhar Card"
-            imageUrl={vehicleData.aadharCard || "/api/placeholder/400/320"}
+            imageUrl={
+              `https://quick-load.onrender.com/${vehicleData.aadharCard}` ||
+              "/api/placeholder/400/320"
+            }
             onFileChange={isEditing ? handleImageChange : undefined}
             error={imageErrors.aadharCard}
             name="aadharCard"
