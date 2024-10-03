@@ -15,6 +15,8 @@ import {
   faPaperPlane,
   faEnvelope,
   faEnvelopeOpen,
+  faSort,
+  faFilter,
 } from "@fortawesome/free-solid-svg-icons";
 import { Notification, NotificationRequest } from "@/types/Notification";
 import LoadingComponent from "@/components/form-components/LoadingComponent";
@@ -38,6 +40,10 @@ const NotificationsPage: React.FC = () => {
     [],
   );
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [filterStatus, setFilterStatus] = useState<"all" | "read" | "unread">(
+    "all",
+  );
 
   useEffect(() => {
     if (!loading && isInitialLoad) {
@@ -63,16 +69,20 @@ const NotificationsPage: React.FC = () => {
         const updatedNotification = await updateNotification(notification._id, {
           isRead: !notification.isRead,
         });
-        setNotifications(
-          (prev) =>
-            prev.map((n) =>
-              n._id === updatedNotification?._id ? updatedNotification : n,
-            ) as Notification[],
-        );
-        refetch();
+        setTimeout(() => {
+          setNotifications(
+            (prev) =>
+              prev.map((n) =>
+                n._id === updatedNotification?._id ? updatedNotification : n,
+              ) as Notification[],
+          );
+          refetch();
+          setUpdatingNotifications((prev) =>
+            prev.filter((id) => id !== notification._id),
+          );
+        }, 300);
       } catch (error) {
         console.error("Error updating notification:", error);
-      } finally {
         setUpdatingNotifications((prev) =>
           prev.filter((id) => id !== notification._id),
         );
@@ -84,6 +94,33 @@ const NotificationsPage: React.FC = () => {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleString();
+  };
+
+  const sortNotifications = (notifications: Notification[]) => {
+    return [...notifications].sort((a, b) => {
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
+      return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
+    });
+  };
+
+  const filterNotifications = (notifications: Notification[]) => {
+    if (filterStatus === "all") return notifications;
+    return notifications.filter((n) =>
+      filterStatus === "read" ? n.isRead : !n.isRead,
+    );
+  };
+
+  const toggleSortOrder = () => {
+    setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+  };
+
+  const toggleFilterStatus = () => {
+    setFilterStatus((prev) => {
+      if (prev === "all") return "read";
+      if (prev === "read") return "unread";
+      return "all";
+    });
   };
 
   if (loading && isInitialLoad) return <LoadingComponent />;
@@ -99,75 +136,139 @@ const NotificationsPage: React.FC = () => {
     );
   }
 
+  const sortedAndFilteredNotifications = filterNotifications(
+    sortNotifications(notifications),
+  );
+
   return (
     <div className="container mx-auto px-4 relative">
       <h1 className="text-2xl font-bold mb-6">Notifications</h1>
 
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
-        <h2 className="text-xl font-semibold p-6 bg-gray-50 border-b">
-          Notification List
-        </h2>
-        {notifications.length === 0 ? (
-          <p className="p-6 text-center text-gray-500">
-            No notifications found.
-          </p>
-        ) : (
-          <ul className="divide-y divide-gray-200">
-            {notifications.map((notification: Notification) => (
-              <li
-                key={notification._id}
-                className={`p-6 hover:bg-gray-50 transition-colors ${
-                  updatingNotifications.includes(notification._id)
-                    ? "opacity-50"
-                    : ""
-                }`}
-              >
-                <div className="flex items-start">
-                  <div className="flex-shrink-0">
-                    <FontAwesomeIcon
-                      icon={faBell}
-                      className="text-primary-600"
-                    />
-                  </div>
-                  <div className="ml-4 flex-1">
-                    <p className="text-sm font-medium text-gray-900">
-                      {notification.type}
-                    </p>
-                    <p className="mt-1 text-sm text-gray-500">
-                      {notification.message}
-                    </p>
-                    <p className="mt-2 text-xs text-gray-400">
-                      {formatDate(notification.createdAt)}
-                    </p>
-                  </div>
-                  <div className="ml-4 flex-shrink-0 flex items-center">
-                    <span
-                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        notification.isRead
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
-                      }`}
-                    >
-                      {notification.isRead ? "Read" : "Unread"}
-                    </span>
-                    <button
-                      onClick={() => handleToggleRead(notification)}
-                      className="ml-2 text-gray-400 hover:text-gray-600"
-                      disabled={updatingNotifications.includes(
-                        notification._id,
-                      )}
-                    >
-                      <FontAwesomeIcon
-                        icon={notification.isRead ? faEnvelope : faEnvelopeOpen}
-                        className="text-lg"
-                      />
-                    </button>
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
+        <div className="flex justify-between items-center p-6 bg-gray-50 border-b">
+          <h2 className="text-xl font-semibold">Notification List</h2>
+          <div className="space-x-2">
+            <motion.button
+              onClick={toggleSortOrder}
+              className="px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200"
+              whileTap={{ scale: 0.95 }}
+            >
+              <FontAwesomeIcon icon={faSort} className="mr-2" />
+              {sortOrder === "asc" ? "Oldest First" : "Newest First"}
+            </motion.button>
+            <motion.button
+              onClick={toggleFilterStatus}
+              className="px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200"
+              whileTap={{ scale: 0.95 }}
+            >
+              <FontAwesomeIcon icon={faFilter} className="mr-2" />
+              {filterStatus === "all"
+                ? "All"
+                : filterStatus === "read"
+                  ? "Read"
+                  : "Unread"}
+            </motion.button>
+          </div>
+        </div>
+        <AnimatePresence>
+          {sortedAndFilteredNotifications.length === 0 ? (
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="p-6 text-center text-gray-500"
+            >
+              No notifications found.
+            </motion.p>
+          ) : (
+            <motion.ul
+              className="divide-y divide-gray-200"
+              initial="hidden"
+              animate="visible"
+              variants={{
+                visible: {
+                  transition: {
+                    staggerChildren: 0.05,
+                  },
+                },
+              }}
+            >
+              {sortedAndFilteredNotifications.map(
+                (notification: Notification) => (
+                  <motion.li
+                    key={notification._id}
+                    className={`p-6 hover:bg-gray-50 transition-colors`}
+                    variants={{
+                      hidden: { opacity: 0, y: 20 },
+                      visible: { opacity: 1, y: 0 },
+                    }}
+                    animate={{
+                      opacity: updatingNotifications.includes(notification._id)
+                        ? 0.5
+                        : 1,
+                      transition: { duration: 0.3 },
+                    }}
+                  >
+                    <div className="flex items-start">
+                      <div className="flex-shrink-0">
+                        <FontAwesomeIcon
+                          icon={faBell}
+                          className="text-primary-600"
+                        />
+                      </div>
+                      <div className="ml-4 flex-1">
+                        <p className="text-sm font-medium text-gray-900">
+                          {notification.type}
+                        </p>
+                        <p className="mt-1 text-sm text-gray-500">
+                          {notification.message}
+                        </p>
+                        <p className="mt-2 text-xs text-gray-400">
+                          {formatDate(notification.createdAt)}
+                        </p>
+                      </div>
+                      <div className="ml-4 flex-shrink-0 flex items-center">
+                        <span
+                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            notification.isRead
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-red-800"
+                          }`}
+                        >
+                          {notification.isRead ? "Read" : "Unread"}
+                        </span>
+                        <motion.button
+                          onClick={() => handleToggleRead(notification)}
+                          className="ml-2 px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-md text-sm font-medium transition-colors duration-200"
+                          disabled={updatingNotifications.includes(
+                            notification._id,
+                          )}
+                          whileTap={{
+                            scale: updatingNotifications.includes(
+                              notification._id,
+                            )
+                              ? 1
+                              : 0.95,
+                          }}
+                        >
+                          <FontAwesomeIcon
+                            icon={
+                              notification.isRead ? faEnvelope : faEnvelopeOpen
+                            }
+                            className="mr-1"
+                          />
+                          {notification.isRead
+                            ? "Mark as Unread"
+                            : "Mark as Read"}
+                        </motion.button>
+                      </div>
+                    </div>
+                  </motion.li>
+                ),
+              )}
+            </motion.ul>
+          )}
+        </AnimatePresence>
       </div>
 
       <motion.div
@@ -262,7 +363,7 @@ const NotificationsPage: React.FC = () => {
                 </div>
                 <button
                   type="submit"
-                  className="bg-primary-600 text-white px-6 py-3 rounded-md w-full text-sm font-medium"
+                  className="bg-primary-600 text-white px-6 py-3 rounded-md w-full text-sm font-medium transition-colors duration-200 hover:bg-primary-700"
                   disabled={sendLoading}
                 >
                   {sendLoading ? (
