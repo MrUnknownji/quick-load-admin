@@ -37,26 +37,26 @@ const ProductsPage: React.FC = () => {
   const productTypes = ["All", "Bajri", "Bricks", "Grit", "Cement"];
 
   const filteredProducts = useMemo(() => {
-    let filtered = products;
     if (selectedTab !== "All") {
-      filtered = products.filter(
+      return products.filter(
         (product) =>
           product.productType.toLowerCase() === selectedTab.toLowerCase(),
       );
     }
-    return filtered.sort((a, b) => {
-      if (sortByVerified === "asc") {
-        return Number(b.isVerified) - Number(a.isVerified);
-      } else {
-        return Number(a.isVerified) - Number(b.isVerified);
-      }
-    });
-  }, [products, selectedTab, sortByVerified]);
+    return products;
+  }, [products, selectedTab]);
 
   const paginatedProducts = useMemo(() => {
+    const sortedProducts = [...filteredProducts].sort((a, b) => {
+      if (sortByVerified === "asc") {
+        return Number(a.isVerified) - Number(b.isVerified);
+      } else {
+        return Number(b.isVerified) - Number(a.isVerified);
+      }
+    });
     const startIndex = (currentPage - 1) * 10;
-    return filteredProducts.slice(startIndex, startIndex + 10);
-  }, [filteredProducts, currentPage]);
+    return sortedProducts.slice(startIndex, startIndex + 10);
+  }, [filteredProducts, currentPage, sortByVerified]);
 
   const totalPages = Math.ceil(filteredProducts.length / 10);
 

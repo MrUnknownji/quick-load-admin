@@ -35,25 +35,23 @@ const VehiclesPage: React.FC = () => {
   const [sortByVerified, setSortByVerified] = useState<"asc" | "desc">("asc");
 
   const filteredVehicles = useMemo(() => {
-    let filtered = vehicles;
     if (selectedType !== "All Vehicles") {
-      filtered = vehicles.filter(
-        (vehicle) => vehicle.vehicleType === selectedType,
-      );
+      return vehicles.filter((vehicle) => vehicle.vehicleType === selectedType);
     }
-    return filtered.sort((a, b) => {
-      if (sortByVerified === "asc") {
-        return Number(b.isVerified) - Number(a.isVerified);
-      } else {
-        return Number(a.isVerified) - Number(b.isVerified);
-      }
-    });
-  }, [vehicles, selectedType, sortByVerified]);
+    return vehicles;
+  }, [vehicles, selectedType]);
 
   const paginatedVehicles = useMemo(() => {
+    const sortedVehicles = [...filteredVehicles].sort((a, b) => {
+      if (sortByVerified === "asc") {
+        return Number(a.isVerified) - Number(b.isVerified);
+      } else {
+        return Number(b.isVerified) - Number(a.isVerified);
+      }
+    });
     const startIndex = (currentPage - 1) * 10;
-    return filteredVehicles.slice(startIndex, startIndex + 10);
-  }, [filteredVehicles, currentPage]);
+    return sortedVehicles.slice(startIndex, startIndex + 10);
+  }, [filteredVehicles, currentPage, sortByVerified]);
 
   const totalPages = Math.ceil(filteredVehicles.length / 10);
 

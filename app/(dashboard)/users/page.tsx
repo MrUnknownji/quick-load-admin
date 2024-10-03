@@ -44,25 +44,25 @@ const UsersPage: React.FC = () => {
   }, [getUsers]);
 
   const filteredUsers = useMemo(() => {
-    let filtered = users;
     if (selectedTab !== "All User") {
-      filtered = users.filter(
+      return users.filter(
         (user) => user.type.toLowerCase() === selectedTab.toLowerCase(),
       );
     }
-    return filtered.sort((a, b) => {
-      if (sortByVerified === "asc") {
-        return Number(b.isVerified) - Number(a.isVerified);
-      } else {
-        return Number(a.isVerified) - Number(b.isVerified);
-      }
-    });
-  }, [users, selectedTab, sortByVerified]);
+    return users;
+  }, [users, selectedTab]);
 
   const paginatedUsers = useMemo(() => {
+    const sortedUsers = [...filteredUsers].sort((a, b) => {
+      if (sortByVerified === "asc") {
+        return Number(a.isVerified) - Number(b.isVerified);
+      } else {
+        return Number(b.isVerified) - Number(a.isVerified);
+      }
+    });
     const startIndex = (currentPage - 1) * 10;
-    return filteredUsers.slice(startIndex, startIndex + 10);
-  }, [filteredUsers, currentPage]);
+    return sortedUsers.slice(startIndex, startIndex + 10);
+  }, [filteredUsers, currentPage, sortByVerified]);
 
   const totalPages = Math.ceil(filteredUsers.length / 10);
 

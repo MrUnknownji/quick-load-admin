@@ -35,25 +35,25 @@ const ProductOwnersPage: React.FC = () => {
   const [sortByVerified, setSortByVerified] = useState<"asc" | "desc">("asc");
 
   const filteredOwners = useMemo(() => {
-    let filtered = productOwners;
     if (selectedTab !== "All Owners") {
-      filtered = productOwners.filter((owner) =>
+      return productOwners.filter((owner) =>
         owner.productType.includes(selectedTab),
       );
     }
-    return filtered.sort((a, b) => {
-      if (sortByVerified === "asc") {
-        return Number(b.isVerified) - Number(a.isVerified);
-      } else {
-        return Number(a.isVerified) - Number(b.isVerified);
-      }
-    });
-  }, [productOwners, selectedTab, sortByVerified]);
+    return productOwners;
+  }, [productOwners, selectedTab]);
 
   const paginatedOwners = useMemo(() => {
+    const sortedOwners = [...filteredOwners].sort((a, b) => {
+      if (sortByVerified === "asc") {
+        return Number(a.isVerified) - Number(b.isVerified);
+      } else {
+        return Number(b.isVerified) - Number(a.isVerified);
+      }
+    });
     const startIndex = (currentPage - 1) * 10;
-    return filteredOwners.slice(startIndex, startIndex + 10);
-  }, [filteredOwners, currentPage]);
+    return sortedOwners.slice(startIndex, startIndex + 10);
+  }, [filteredOwners, currentPage, sortByVerified]);
 
   const totalPages = Math.ceil(filteredOwners.length / 10);
 
