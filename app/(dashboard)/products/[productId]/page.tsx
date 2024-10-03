@@ -18,6 +18,7 @@ export default function ProductInfo() {
   const [productImage, setProductImage] = useState<File | null>(null);
   const [updatedFields, setUpdatedFields] = useState<Partial<Product>>({});
   const productTypes = ["Bajri", "Bricks", "Grit", "Cement"];
+  const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
     if (product) {
@@ -70,6 +71,7 @@ export default function ProductInfo() {
   const handleUpdate = async () => {
     if (!productData) return;
 
+    setUpdating(true);
     const formData = createFormData();
 
     try {
@@ -84,6 +86,8 @@ export default function ProductInfo() {
       }
     } catch (err) {
       console.error("Failed to update product information:", err);
+    } finally {
+      setUpdating(false);
     }
   };
 
@@ -98,9 +102,11 @@ export default function ProductInfo() {
         <div>
           {isEditing ? (
             <Check
-              className="h-8 w-8 text-blue-500 cursor-pointer"
+              className={`h-8 w-8 ${
+                updating ? "text-gray-400" : "text-blue-500 cursor-pointer"
+              }`}
               aria-label="Save"
-              onClick={handleUpdate}
+              onClick={updating ? undefined : handleUpdate}
             />
           ) : (
             <Edit
@@ -111,7 +117,8 @@ export default function ProductInfo() {
           )}
         </div>
       </div>
-      <form>
+      {updating && <LoadingComponent />}
+      <form className={updating ? "opacity-50 pointer-events-none" : ""}>
         <div className="grid grid-cols-2 gap-6 mb-6">
           <SelectField
             label="Product Type"

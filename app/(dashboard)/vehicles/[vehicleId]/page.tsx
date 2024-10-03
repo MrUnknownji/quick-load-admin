@@ -22,6 +22,7 @@ export default function VehicleInfo() {
   const [rcImage, setRcImage] = useState<File | null>(null);
   const [panCardImage, setPanCardImage] = useState<File | null>(null);
   const [aadharCardImage, setAadharCardImage] = useState<File | null>(null);
+  const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
     if (vehicle) {
@@ -89,6 +90,7 @@ export default function VehicleInfo() {
   const handleUpdate = async () => {
     if (!vehicleData) return;
 
+    setUpdating(true);
     const formData = createFormData();
 
     try {
@@ -106,6 +108,8 @@ export default function VehicleInfo() {
       }
     } catch (err) {
       console.error("Failed to update vehicle information:", err);
+    } finally {
+      setUpdating(false);
     }
   };
 
@@ -120,9 +124,11 @@ export default function VehicleInfo() {
         <div>
           {isEditing ? (
             <Check
-              className="h-8 w-8 text-blue-500 cursor-pointer"
+              className={`h-8 w-8 ${
+                updating ? "text-gray-400" : "text-blue-500 cursor-pointer"
+              }`}
               aria-label="Save"
-              onClick={handleUpdate}
+              onClick={updating ? undefined : handleUpdate}
             />
           ) : (
             <Edit
@@ -133,7 +139,8 @@ export default function VehicleInfo() {
           )}
         </div>
       </div>
-      <form>
+      {updating && <LoadingComponent />}
+      <form className={updating ? "opacity-50 pointer-events-none" : ""}>
         <div className="grid grid-cols-2 gap-6 mb-6">
           <InputField
             label="Vehicle Number"

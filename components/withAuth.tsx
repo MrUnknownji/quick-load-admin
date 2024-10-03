@@ -1,5 +1,4 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/hooks/useUser";
@@ -12,24 +11,38 @@ const AuthWrapper = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     if (!loading) {
+      const accessToken = localStorage.getItem("accessToken");
+
+      if (!accessToken) {
+        console.log("No access token found");
+        router.replace("/");
+        return;
+      }
+
       if (!user) {
+        console.log("No user found");
         router.replace("/");
       } else {
-        console.log("Current user:", user); // For debugging
+        console.log("Current user:", user);
         const isAdmin = user.type === "admin";
-        setIsAuthorized(isAdmin);
+        setIsAuthorized(isAdmin && !!accessToken);
 
         if (!isAdmin) {
-          console.log("User type:", user.type); // For debugging
+          console.log("User type:", user.type);
         }
       }
     }
   }, [user, loading, router]);
 
-  if (loading) return <LoadingComponent />;
+  if (loading)
+    return (
+      <div className="w-screen h-screen flex items-center justify-center">
+        <LoadingComponent />
+      </div>
+    );
 
   if (!isAuthorized) {
-    console.log("Access denied. User:", user); // For debugging
+    console.log("Access denied. User:", user);
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
         <div className="bg-white p-8 rounded-lg shadow-md">

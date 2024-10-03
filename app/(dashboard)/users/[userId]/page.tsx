@@ -15,6 +15,7 @@ const UserInfo = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [userData, setUserData] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [aadharCardImage, setAadharCardImage] = useState<File | null>(null);
   const [panCardImage, setPanCardImage] = useState<File | null>(null);
@@ -22,9 +23,11 @@ const UserInfo = () => {
 
   useEffect(() => {
     const fetchUserData = async () => {
+      setLoading(true);
       try {
         const user = await getUser(userId as string);
         setUserData(user);
+        setError(null);
       } catch (err) {
         setError("Failed to fetch user data");
         console.error(err);
@@ -88,6 +91,7 @@ const UserInfo = () => {
   const handleUpdate = async () => {
     if (!userData) return;
 
+    setUpdating(true);
     try {
       const formData = createFormData();
       const updatedUser = await updateProfile(userId as string, formData);
@@ -96,9 +100,12 @@ const UserInfo = () => {
       setAadharCardImage(null);
       setPanCardImage(null);
       setUpdatedFields({});
+      setError(null);
     } catch (err) {
       setError("Failed to update user information");
       console.error(err);
+    } finally {
+      setUpdating(false);
     }
   };
 
@@ -113,9 +120,11 @@ const UserInfo = () => {
         <div>
           {isEditing ? (
             <Check
-              className="h-8 w-8 text-blue-500 cursor-pointer"
+              className={`h-8 w-8 ${
+                updating ? "text-gray-400" : "text-blue-500 cursor-pointer"
+              }`}
               aria-label="Save"
-              onClick={handleUpdate}
+              onClick={updating ? undefined : handleUpdate}
             />
           ) : (
             <Edit
@@ -127,7 +136,9 @@ const UserInfo = () => {
         </div>
       </div>
 
-      <form>
+      {updating && <LoadingComponent />}
+
+      <form className={updating ? "opacity-50 pointer-events-none" : ""}>
         <section className="mb-8">
           <h3 className="text-xl font-semibold mb-4">Personal Information</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

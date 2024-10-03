@@ -15,6 +15,7 @@ import {
   faBox,
 } from "@fortawesome/free-solid-svg-icons";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 interface SidebarProps {
   expanded: boolean;
@@ -29,6 +30,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   toggleSidebar,
   currentPath,
 }) => {
+  const router = useRouter();
+
   const menuItems = [
     { name: "Dashboard", icon: faHome, path: "/dashboard" },
     { name: "Users", icon: faUsers, path: "/users" },
@@ -40,6 +43,11 @@ const Sidebar: React.FC<SidebarProps> = ({
     { name: "Orders", icon: faClipboardList, path: "/orders" },
     { name: "Payment", icon: faCreditCard, path: "/payment" },
   ];
+
+  const handleLogout = () => {
+    localStorage.clear();
+    router.push("/");
+  };
 
   return (
     <aside
@@ -90,7 +98,10 @@ const Sidebar: React.FC<SidebarProps> = ({
         </ul>
       </nav>
       <div className="p-4">
-        <button className="flex items-center w-full py-2 px-4 hover:bg-[#4c1b1b] rounded-lg transition-all duration-200 ease-in-out">
+        <button
+          onClick={handleLogout}
+          className="flex items-center w-full py-2 px-4 hover:bg-[#4c1b1b] rounded-lg transition-all duration-200 ease-in-out"
+        >
           <FontAwesomeIcon
             icon={faSignOutAlt}
             className={`${expanded ? "mr-4" : "mx-auto"}`}

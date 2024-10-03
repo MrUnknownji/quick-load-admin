@@ -22,6 +22,7 @@ export default function ProductOwnerInfo() {
   const [ownerData, setOwnerData] = useState<ProductOwner | null>(null);
   const [updatedFields, setUpdatedFields] = useState<Partial<ProductOwner>>({});
   const [shopImage, setShopImage] = useState<File | null>(null);
+  const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
     if (productOwners.length > 0) {
@@ -102,6 +103,7 @@ export default function ProductOwnerInfo() {
   const handleUpdate = async () => {
     if (!ownerData) return;
 
+    setUpdating(true);
     const formData = createFormData();
 
     try {
@@ -119,6 +121,8 @@ export default function ProductOwnerInfo() {
       }
     } catch (err) {
       console.error("Failed to update product owner information:", err);
+    } finally {
+      setUpdating(false);
     }
   };
 
@@ -152,9 +156,11 @@ export default function ProductOwnerInfo() {
         <div className="cursor-pointer">
           {isEditing ? (
             <Check
-              className="h-8 w-8 text-blue-500"
+              className={`h-8 w-8 ${
+                updating ? "text-gray-400" : "text-blue-500"
+              }`}
               aria-label="Save"
-              onClick={handleUpdate}
+              onClick={updating ? undefined : handleUpdate}
             />
           ) : (
             <Edit
@@ -165,7 +171,8 @@ export default function ProductOwnerInfo() {
           )}
         </div>
       </div>
-      <form>
+      {updating && <LoadingComponent />}
+      <form className={updating ? "opacity-50 pointer-events-none" : ""}>
         <div className="grid grid-cols-2 gap-6 mb-6">
           <InputField
             label="Product Owner Name"
