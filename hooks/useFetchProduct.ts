@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import {
   getProducts,
+  getProductOwners,
   getProductById,
   getProductsByOwnerAndType,
   getProductOwnersByType,
+  getProductsByUserId,
   addNewProduct,
   addNewProductOwner,
   updateExistingProduct,
@@ -35,6 +37,32 @@ export const useFetchProducts = () => {
   }, [fetchProducts]);
 
   return { products, loading, error, fetchProducts };
+};
+
+export const useFetchProductOwners = () => {
+  const [productOwners, setProductOwners] = useState<ProductOwner[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchProductOwners = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getProductOwners();
+      setProductOwners(data);
+    } catch (err) {
+      console.error("Error fetching product owners:", err);
+      setError("Failed to fetch product owners");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchProductOwners();
+  }, [fetchProductOwners]);
+
+  return { productOwners, loading, error, fetchProductOwners };
 };
 
 export const useFetchProductById = (productId: string) => {
@@ -161,8 +189,12 @@ export const useUpdateProduct = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const updateProduct = async (productId: string, productData: FormData) => {
+  const updateProduct = async (
+    productId: string,
+    productData: FormData,
+  ): Promise<Product | undefined> => {
     setLoading(true);
+    setError(null);
     try {
       const result = await updateExistingProduct(productId, productData);
       setLoading(false);
@@ -171,6 +203,7 @@ export const useUpdateProduct = () => {
       console.error("Error updating product:", err);
       setError("Failed to update product");
       setLoading(false);
+      return undefined;
     }
   };
 
@@ -205,7 +238,7 @@ export const useUpdateProductOwner = () => {
   return { updateProductOwner, loading, error };
 };
 
-export const useFetchProductsByUserId = (userId: string) => {
+export const useFetchProductsByUserId = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -214,18 +247,15 @@ export const useFetchProductsByUserId = (userId: string) => {
     setLoading(true);
     setError(null);
     try {
-      const allProducts = await getProducts();
-      const filteredProducts = allProducts.filter(
-        (product) => product.productOwner === userId,
-      );
-      setProducts(filteredProducts);
+      const data = await getProductsByUserId();
+      setProducts(data);
     } catch (err) {
       console.error("Error fetching products:", err);
       setError("Failed to fetch products");
     } finally {
       setLoading(false);
     }
-  }, [userId]);
+  }, []);
 
   useEffect(() => {
     fetchProducts();
@@ -234,6 +264,7 @@ export const useFetchProductsByUserId = (userId: string) => {
   return { products, loading, error, fetchProducts };
 };
 
+// Note: There's no DELETE endpoint in the provided API, so we'll keep this as a placeholder
 export const useDeleteProduct = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

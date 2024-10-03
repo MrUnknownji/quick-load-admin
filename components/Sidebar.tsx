@@ -11,6 +11,7 @@ import {
   faCreditCard,
   faSignOutAlt,
   faTimes,
+  faBell,
 } from "@fortawesome/free-solid-svg-icons";
 import Image from "next/image";
 
@@ -30,6 +31,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const menuItems = [
     { name: "Dashboard", icon: faHome, path: "/dashboard" },
     { name: "Users", icon: faUsers, path: "/users" },
+    { name: "Notifications", icon: faBell, path: "/notifications" },
     { name: "Products", icon: faBox, path: "/products" },
     { name: "Vehicles", icon: faTruck, path: "/vehicles" },
     { name: "Transports", icon: faShip, path: "/transports" },

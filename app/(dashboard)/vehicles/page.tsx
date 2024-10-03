@@ -11,6 +11,7 @@ import {
 import Link from "next/link";
 import { useFetchVehicles } from "@/hooks/useFetchVehicle";
 import { Vehicle } from "@/types/Vehicle";
+import LoadingComponent from "@/components/form-components/LoadingComponent";
 
 interface VehicleCardProps {
   title: string;
@@ -61,7 +62,7 @@ const VehiclesPage: React.FC = () => {
     ...Array.from(new Set(vehicles.map((v) => v.vehicleType))),
   ];
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <LoadingComponent />;
   if (error) return <div>Error: {error}</div>;
 
   return (
@@ -162,7 +163,12 @@ const VehicleTable: React.FC<VehicleTableProps> = ({ vehicles }) => (
             key={vehicle.vehicleId}
             className="border-b hover:bg-gray-50 animate-fadeIn"
           >
-            <td className="p-2">{vehicle.vehicleType}</td>
+            <td className="p-2">
+              {vehicle.vehicleType}
+              {vehicle.isVerified && (
+                <span className="text-green-500 ml-1">●</span>
+              )}
+            </td>
             <td className="p-2">{vehicle.vehicleNumber}</td>
             <td className="p-2">{vehicle.driverName}</td>
             <td className="p-2">{vehicle.phoneNumber}</td>

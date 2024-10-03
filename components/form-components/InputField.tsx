@@ -4,7 +4,7 @@ interface InputFieldProps {
   label: string;
   name?: string;
   type: string;
-  value: string;
+  value?: string;
   readOnly?: boolean;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
@@ -26,7 +26,7 @@ const InputField: React.FC<InputFieldProps> = ({
         id={name}
         name={name}
         type={type}
-        value={value}
+        {...(type !== "file" ? { value } : {})}
         onChange={onChange}
         className={`mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 ${
           readOnly ? "bg-gray-100" : ""

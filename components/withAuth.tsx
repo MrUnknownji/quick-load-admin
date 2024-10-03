@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/hooks/useUser";
+import LoadingComponent from "./form-components/LoadingComponent";
 
 const AuthWrapper = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
@@ -25,9 +26,7 @@ const AuthWrapper = ({ children }: { children: React.ReactNode }) => {
     }
   }, [user, loading, router]);
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
+  if (loading) return <LoadingComponent />;
 
   if (!isAuthorized) {
     console.log("Access denied. User:", user); // For debugging

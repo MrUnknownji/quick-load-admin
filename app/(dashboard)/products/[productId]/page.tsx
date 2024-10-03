@@ -5,46 +5,42 @@ import InputField from "@/components/form-components/InputField";
 import SelectField from "@/components/form-components/SelectField";
 import ImageComponent from "@/components/form-components/ImageComponent";
 import { CheckCircle, XCircle, Edit, Check } from "lucide-react";
-import { useFetchVehicleById, useUpdateVehicle } from "@/hooks/useFetchVehicle";
-import { Vehicle } from "@/types/Vehicle";
+import { useFetchProductById, useUpdateProduct } from "@/hooks/useFetchProduct";
+import { Product } from "@/types/Product";
 import LoadingComponent from "@/components/form-components/LoadingComponent";
 
-export default function VehicleInfo() {
-  const { vehicleId } = useParams();
-  const { vehicle, loading, error } = useFetchVehicleById(vehicleId as string);
-  const { updateVehicle } = useUpdateVehicle();
+export default function ProductInfo() {
+  const { productId } = useParams();
+  const { product, loading, error } = useFetchProductById(productId as string);
+  const { updateProduct } = useUpdateProduct();
   const [isEditing, setIsEditing] = useState(false);
-  const [vehicleData, setVehicleData] = useState<Vehicle | null>(null);
-  const [vehicleImage, setVehicleImage] = useState<File | null>(null);
-  const [rcImage, setRcImage] = useState<File | null>(null);
+  const [productData, setProductData] = useState<Product | null>(null);
+  const [productImage, setProductImage] = useState<File | null>(null);
+  const productTypes = ["Bajri", "Bricks", "Grit", "Cement"];
 
   useEffect(() => {
-    if (vehicle) {
-      setVehicleData(vehicle);
+    if (product) {
+      setProductData(product);
     }
-  }, [vehicle]);
+  }, [product]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setVehicleData((prevData) =>
+    setProductData((prevData) =>
       prevData ? { ...prevData, [name]: value } : null,
     );
   };
 
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setVehicleData((prevData) =>
+    setProductData((prevData) =>
       prevData ? { ...prevData, [name]: value } : null,
     );
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      if (e.target.name === "vehicleImage") {
-        setVehicleImage(e.target.files[0]);
-      } else if (e.target.name === "rc") {
-        setRcImage(e.target.files[0]);
-      }
+      setProductImage(e.target.files[0]);
     }
   };
 
@@ -52,77 +48,73 @@ export default function VehicleInfo() {
     setIsEditing(!isEditing);
   };
 
-  const createFormData = (data: Partial<Vehicle>): FormData => {
+  const createFormData = (data: Partial<Product>): FormData => {
     const formData = new FormData();
     Object.entries(data).forEach(([key, value]) => {
       if (value !== null && value !== undefined) {
         formData.append(key, value.toString());
       }
     });
-    if (vehicleImage) {
-      formData.append("vehicleImage", vehicleImage);
-    }
-    if (rcImage) {
-      formData.append("rc", rcImage);
+    if (productImage) {
+      formData.append("productImage", productImage);
     }
     return formData;
   };
 
   const toggleVerify = async () => {
-    if (!vehicleData) return;
+    if (!productData) return;
 
     try {
-      const newVerificationStatus = !vehicleData.isVerified;
+      const newVerificationStatus = !productData.isVerified;
       const formData = createFormData({
-        ...vehicleData,
+        ...productData,
         isVerified: newVerificationStatus,
       });
-      const updatedVehicle = await updateVehicle(vehicleId as string, formData);
-      if (updatedVehicle) {
-        setVehicleData(updatedVehicle);
+      const updatedProduct = await updateProduct(productId as string, formData);
+      if (updatedProduct) {
+        setProductData(updatedProduct);
       } else {
         console.error(
-          `Failed to ${newVerificationStatus ? "verify" : "unverify"} vehicle: No data returned`,
+          `Failed to ${newVerificationStatus ? "verify" : "unverify"} product: No data returned`,
         );
       }
     } catch (err) {
       console.error(
-        `Failed to ${vehicleData.isVerified ? "unverify" : "verify"} vehicle:`,
+        `Failed to ${productData.isVerified ? "unverify" : "verify"} product:`,
         err,
       );
     }
   };
 
   const handleUpdate = async () => {
-    if (!vehicleData) return;
+    if (!productData) return;
 
-    const formData = createFormData(vehicleData);
+    const formData = createFormData(productData);
 
     try {
-      const updatedVehicle = await updateVehicle(vehicleId as string, formData);
-      if (updatedVehicle) {
-        setVehicleData(updatedVehicle);
+      const updatedProduct = await updateProduct(productId as string, formData);
+      if (updatedProduct) {
+        setProductData(updatedProduct);
         setIsEditing(false);
-        setVehicleImage(null);
-        setRcImage(null);
+        setProductImage(null);
       } else {
-        console.error("Failed to update vehicle: No data returned");
+        console.error("Failed to update product: No data returned");
       }
     } catch (err) {
-      console.error("Failed to update vehicle information:", err);
+      console.error("Failed to update product information:", err);
     }
   };
 
   if (loading) return <LoadingComponent />;
   if (error) return <div>Error: {error}</div>;
-  if (!vehicleData) return <div>No vehicle data found</div>;
+  if (!productData) return <div>No product data found</div>;
 
   return (
     <div className="max-w-3xl mx-auto bg-white rounded-lg shadow-md p-6">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Vehicle Detail</h2>
+        <h2 className="text-2xl font-bold">Product Detail</h2>
         <div className="flex space-x-2">
-          {vehicleData.isVerified ? (
+          {productData.isVerified ? (
             <CheckCircle
               className="h-8 w-8 text-green-500 cursor-pointer"
               aria-label="Verified"
@@ -152,38 +144,68 @@ export default function VehicleInfo() {
       </div>
       <form>
         <div className="grid grid-cols-2 gap-6 mb-6">
-          <InputField
-            label="Vehicle Number"
-            name="vehicleNumber"
-            type="text"
-            value={vehicleData.vehicleNumber}
-            onChange={handleInputChange}
+          <SelectField
+            label="Product Type"
+            name="productType"
+            options={productTypes}
+            value={productData.productType}
+            onChange={handleSelectChange}
             readOnly={!isEditing}
           />
-          <SelectField
-            label="Vehicle Type"
-            name="vehicleType"
-            options={["Open Body", "Container", "Trailer", "Dumper"]}
-            value={vehicleData.vehicleType}
-            onChange={handleSelectChange}
+          <InputField
+            label="Product Size"
+            name="productSize"
+            type="text"
+            value={productData.productSize}
+            onChange={handleInputChange}
             readOnly={!isEditing}
           />
         </div>
 
         <div className="grid grid-cols-2 gap-6 mb-6">
           <InputField
-            label="Driver Name"
-            name="driverName"
-            type="text"
-            value={vehicleData.driverName}
+            label="Product Price"
+            name="productPrice"
+            type="number"
+            value={productData.productPrice.toString()}
             onChange={handleInputChange}
             readOnly={!isEditing}
           />
           <InputField
-            label="Driver Phone"
-            name="phoneNumber"
-            type="tel"
-            value={vehicleData.phoneNumber}
+            label="Product Quantity"
+            name="productQuantity"
+            type="number"
+            value={productData.productQuantity.toString()}
+            onChange={handleInputChange}
+            readOnly={!isEditing}
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-6 mb-6">
+          <InputField
+            label="Product Location"
+            name="productLocation"
+            type="text"
+            value={productData.productLocation}
+            onChange={handleInputChange}
+            readOnly={!isEditing}
+          />
+          <InputField
+            label="Product Rating"
+            name="productRating"
+            type="number"
+            value={productData.productRating.toString()}
+            onChange={handleInputChange}
+            readOnly={!isEditing}
+          />
+        </div>
+
+        <div className="mb-6">
+          <InputField
+            label="Product Details"
+            name="productDetails"
+            type="text"
+            value={productData.productDetails}
             onChange={handleInputChange}
             readOnly={!isEditing}
           />
@@ -191,30 +213,14 @@ export default function VehicleInfo() {
 
         <div className="mb-6">
           <ImageComponent
-            title="Vehicle Image"
-            imageUrl={vehicleData.vehicleImage || "/api/placeholder/400/320"}
+            title="Product Image"
+            imageUrl={productData.productImage || "/api/placeholder/400/320"}
           />
           {isEditing && (
             <InputField
-              label="Upload New Vehicle Image"
-              name="vehicleImage"
-              type="file"
-              value={vehicleData.vehicleImage ?? ""}
-              onChange={handleImageChange}
-            />
-          )}
-        </div>
-
-        <div className="mb-6">
-          <ImageComponent
-            title="Vehicle Registration Document"
-            imageUrl={vehicleData.rc || "/api/placeholder/400/320"}
-          />
-          {isEditing && (
-            <InputField
-              label="Upload New RC Document"
-              name="rc"
-              value={vehicleData.rc}
+              label="Upload New Product Image"
+              name="productImage"
+              value={productData.productImage}
               type="file"
               onChange={handleImageChange}
             />

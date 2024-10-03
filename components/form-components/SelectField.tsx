@@ -2,7 +2,7 @@ import React from "react";
 
 interface SelectFieldProps {
   label: string;
-  name?: string; // Add this line
+  name?: string;
   options: string[];
   value: string;
   onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
@@ -11,7 +11,7 @@ interface SelectFieldProps {
 
 const SelectField: React.FC<SelectFieldProps> = ({
   label,
-  name, // Add this line
+  name,
   options,
   value,
   onChange,
@@ -25,7 +25,7 @@ const SelectField: React.FC<SelectFieldProps> = ({
       <div className="relative">
         <select
           id={name}
-          name={name} // Add this line
+          name={name}
           className={`mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 appearance-none ${
             readOnly ? "bg-gray-100 cursor-not-allowed" : "bg-white"
           }`}

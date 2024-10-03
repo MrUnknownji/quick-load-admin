@@ -11,6 +11,7 @@ import {
 import Link from "next/link";
 import { useUser } from "@/hooks/useUser";
 import { User } from "@/types/User";
+import LoadingComponent from "@/components/form-components/LoadingComponent";
 
 interface UserCardProps {
   title: string;
@@ -65,7 +66,7 @@ const UsersPage: React.FC = () => {
 
   const totalPages = Math.ceil(filteredUsers.length / 10);
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <LoadingComponent />;
   if (error) return <div>Error: {error}</div>;
 
   return (

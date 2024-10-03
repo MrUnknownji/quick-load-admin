@@ -3,9 +3,11 @@ import React, { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import InputField from "@/components/form-components/InputField";
 import SelectField from "@/components/form-components/SelectField";
+import ImageComponent from "@/components/form-components/ImageComponent";
 import { CheckCircle, XCircle, Edit, Check } from "lucide-react";
 import { useUser } from "@/hooks/useUser";
 import { User } from "@/types/User";
+import LoadingComponent from "@/components/form-components/LoadingComponent";
 
 const UserInfo = () => {
   const { userId } = useParams();
@@ -14,6 +16,8 @@ const UserInfo = () => {
   const [userData, setUserData] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [aadharCardImage, setAadharCardImage] = useState<File | null>(null);
+  const [panCardImage, setPanCardImage] = useState<File | null>(null);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -45,6 +49,16 @@ const UserInfo = () => {
     );
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      if (e.target.name === "aadharCard") {
+        setAadharCardImage(e.target.files[0]);
+      } else if (e.target.name === "panCard") {
+        setPanCardImage(e.target.files[0]);
+      }
+    }
+  };
+
   const toggleEdit = () => {
     setIsEditing(!isEditing);
   };
@@ -56,18 +70,28 @@ const UserInfo = () => {
         formData.append(key, value.toString());
       }
     });
+    if (aadharCardImage) {
+      formData.append("aadharCard", aadharCardImage);
+    }
+    if (panCardImage) {
+      formData.append("panCard", panCardImage);
+    }
     return formData;
   };
 
-  const handleVerify = async () => {
+  const toggleVerify = async () => {
     if (!userData) return;
 
     try {
-      const formData = createFormData({ ...userData, isVerified: true });
+      const newVerificationStatus = !userData.isVerified;
+      const formData = createFormData({
+        ...userData,
+        isVerified: newVerificationStatus,
+      });
       const updatedUser = await updateProfile(userId as string, formData);
       setUserData(updatedUser);
     } catch (err) {
-      setError("Failed to verify user");
+      setError(`Failed to ${userData.isVerified ? "unverify" : "verify"} user`);
       console.error(err);
     }
   };
@@ -80,13 +104,15 @@ const UserInfo = () => {
       const updatedUser = await updateProfile(userId as string, formData);
       setUserData(updatedUser);
       setIsEditing(false);
+      setAadharCardImage(null);
+      setPanCardImage(null);
     } catch (err) {
       setError("Failed to update user information");
       console.error(err);
     }
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <LoadingComponent />;
   if (error) return <div>Error: {error}</div>;
   if (!userData) return <div>No user data found</div>;
 
@@ -95,15 +121,19 @@ const UserInfo = () => {
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">User Detail</h2>
         <div className="flex space-x-2">
-          <XCircle
-            className="h-8 w-8 text-red-500 cursor-pointer"
-            aria-label="Reject"
-          />
-          <CheckCircle
-            className="h-8 w-8 text-green-500 cursor-pointer"
-            aria-label="Verify"
-            onClick={handleVerify}
-          />
+          {userData.isVerified ? (
+            <CheckCircle
+              className="h-8 w-8 text-green-500 cursor-pointer"
+              aria-label="Verified"
+              onClick={toggleVerify}
+            />
+          ) : (
+            <XCircle
+              className="h-8 w-8 text-red-500 cursor-pointer"
+              aria-label="Not Verified"
+              onClick={toggleVerify}
+            />
+          )}
           {isEditing ? (
             <Check
               className="h-8 w-8 text-blue-500 cursor-pointer"
@@ -175,6 +205,39 @@ const UserInfo = () => {
               onChange={handleInputChange}
             />
           </div>
+        </section>
+        <section className="mb-8">
+          <h3 className="text-xl font-semibold mb-4">Documents</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {userData.aadharCard && (
+              <ImageComponent
+                title="Aadhar Card"
+                imageUrl={`https://quick-load.onrender.com/${userData.aadharCard}`}
+              />
+            )}
+            {userData.panCard && (
+              <ImageComponent
+                title="PAN Card"
+                imageUrl={`https://quick-load.onrender.com/${userData.panCard}`}
+              />
+            )}
+          </div>
+          {isEditing && (
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <InputField
+                label="Upload New Aadhar Card"
+                name="aadharCard"
+                type="file"
+                onChange={handleImageChange}
+              />
+              <InputField
+                label="Upload New PAN Card"
+                name="panCard"
+                type="file"
+                onChange={handleImageChange}
+              />
+            </div>
+          )}
         </section>
       </form>
     </div>
