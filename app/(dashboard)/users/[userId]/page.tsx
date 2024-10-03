@@ -4,7 +4,7 @@ import { useParams } from "next/navigation";
 import InputField from "@/components/form-components/InputField";
 import SelectField from "@/components/form-components/SelectField";
 import ImageComponent from "@/components/form-components/ImageComponent";
-import { CheckCircle, XCircle, Edit, Check } from "lucide-react";
+import { Edit, Check } from "lucide-react";
 import { useUser } from "@/hooks/useUser";
 import { User } from "@/types/User";
 import LoadingComponent from "@/components/form-components/LoadingComponent";
@@ -18,6 +18,7 @@ const UserInfo = () => {
   const [error, setError] = useState<string | null>(null);
   const [aadharCardImage, setAadharCardImage] = useState<File | null>(null);
   const [panCardImage, setPanCardImage] = useState<File | null>(null);
+  const [updatedFields, setUpdatedFields] = useState<Partial<User>>({});
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -40,6 +41,7 @@ const UserInfo = () => {
     setUserData((prevData) =>
       prevData ? { ...prevData, [name]: value } : null,
     );
+    setUpdatedFields((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -47,6 +49,7 @@ const UserInfo = () => {
     setUserData((prevData) =>
       prevData ? { ...prevData, [name]: value } : null,
     );
+    setUpdatedFields((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -61,11 +64,14 @@ const UserInfo = () => {
 
   const toggleEdit = () => {
     setIsEditing(!isEditing);
+    if (!isEditing) {
+      setUpdatedFields({});
+    }
   };
 
-  const createFormData = (data: Partial<User>): FormData => {
+  const createFormData = (): FormData => {
     const formData = new FormData();
-    Object.entries(data).forEach(([key, value]) => {
+    Object.entries(updatedFields).forEach(([key, value]) => {
       if (value !== null && value !== undefined) {
         formData.append(key, value.toString());
       }
@@ -79,33 +85,17 @@ const UserInfo = () => {
     return formData;
   };
 
-  const toggleVerify = async () => {
-    if (!userData) return;
-
-    try {
-      const newVerificationStatus = !userData.isVerified;
-      const formData = createFormData({
-        ...userData,
-        isVerified: newVerificationStatus,
-      });
-      const updatedUser = await updateProfile(userId as string, formData);
-      setUserData(updatedUser);
-    } catch (err) {
-      setError(`Failed to ${userData.isVerified ? "unverify" : "verify"} user`);
-      console.error(err);
-    }
-  };
-
   const handleUpdate = async () => {
     if (!userData) return;
 
     try {
-      const formData = createFormData(userData);
+      const formData = createFormData();
       const updatedUser = await updateProfile(userId as string, formData);
       setUserData(updatedUser);
       setIsEditing(false);
       setAadharCardImage(null);
       setPanCardImage(null);
+      setUpdatedFields({});
     } catch (err) {
       setError("Failed to update user information");
       console.error(err);
@@ -117,23 +107,10 @@ const UserInfo = () => {
   if (!userData) return <div>No user data found</div>;
 
   return (
-    <div className="max-w-3xl mx-auto bg-white rounded-lg shadow-md p-6">
+    <div className="max-w-5xl mx-auto bg-white rounded-lg shadow-md p-6">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">User Detail</h2>
-        <div className="flex space-x-2">
-          {userData.isVerified ? (
-            <CheckCircle
-              className="h-8 w-8 text-green-500 cursor-pointer"
-              aria-label="Verified"
-              onClick={toggleVerify}
-            />
-          ) : (
-            <XCircle
-              className="h-8 w-8 text-red-500 cursor-pointer"
-              aria-label="Not Verified"
-              onClick={toggleVerify}
-            />
-          )}
+        <div>
           {isEditing ? (
             <Check
               className="h-8 w-8 text-blue-500 cursor-pointer"
@@ -194,6 +171,14 @@ const UserInfo = () => {
               readOnly={!isEditing}
               onChange={handleSelectChange}
             />
+            <SelectField
+              label="Verified"
+              name="isVerified"
+              options={["true", "false"]}
+              value={userData.isVerified.toString()}
+              readOnly={!isEditing}
+              onChange={handleSelectChange}
+            />
           </div>
           <div className="mt-4">
             <InputField
@@ -201,6 +186,16 @@ const UserInfo = () => {
               name="address"
               type="text"
               value={userData.address || ""}
+              readOnly={!isEditing}
+              onChange={handleInputChange}
+            />
+          </div>
+          <div className="mt-4">
+            <InputField
+              label="City"
+              name="city"
+              type="text"
+              value={userData.city || ""}
               readOnly={!isEditing}
               onChange={handleInputChange}
             />

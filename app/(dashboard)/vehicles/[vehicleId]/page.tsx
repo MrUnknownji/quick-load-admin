@@ -4,7 +4,7 @@ import { useParams } from "next/navigation";
 import InputField from "@/components/form-components/InputField";
 import SelectField from "@/components/form-components/SelectField";
 import ImageComponent from "@/components/form-components/ImageComponent";
-import { CheckCircle, XCircle, Edit, Check } from "lucide-react";
+import { Edit, Check } from "lucide-react";
 import { useFetchVehicleById, useUpdateVehicle } from "@/hooks/useFetchVehicle";
 import { Vehicle } from "@/types/Vehicle";
 import LoadingComponent from "@/components/form-components/LoadingComponent";
@@ -15,8 +15,13 @@ export default function VehicleInfo() {
   const { updateVehicle } = useUpdateVehicle();
   const [isEditing, setIsEditing] = useState(false);
   const [vehicleData, setVehicleData] = useState<Vehicle | null>(null);
-  const [vehicleImage, setVehicleImage] = useState<File | null>(null);
+  const [updatedFields, setUpdatedFields] = useState<Partial<Vehicle>>({});
+  const [drivingLicenceImage, setDrivingLicenceImage] = useState<File | null>(
+    null,
+  );
   const [rcImage, setRcImage] = useState<File | null>(null);
+  const [panCardImage, setPanCardImage] = useState<File | null>(null);
+  const [aadharCardImage, setAadharCardImage] = useState<File | null>(null);
 
   useEffect(() => {
     if (vehicle) {
@@ -29,6 +34,7 @@ export default function VehicleInfo() {
     setVehicleData((prevData) =>
       prevData ? { ...prevData, [name]: value } : null,
     );
+    setUpdatedFields((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -36,75 +42,65 @@ export default function VehicleInfo() {
     setVehicleData((prevData) =>
       prevData ? { ...prevData, [name]: value } : null,
     );
+    setUpdatedFields((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      if (e.target.name === "vehicleImage") {
-        setVehicleImage(e.target.files[0]);
-      } else if (e.target.name === "rc") {
-        setRcImage(e.target.files[0]);
+      switch (e.target.name) {
+        case "drivingLicence":
+          setDrivingLicenceImage(e.target.files[0]);
+          break;
+        case "rc":
+          setRcImage(e.target.files[0]);
+          break;
+        case "panCard":
+          setPanCardImage(e.target.files[0]);
+          break;
+        case "aadharCard":
+          setAadharCardImage(e.target.files[0]);
+          break;
       }
     }
   };
 
   const toggleEdit = () => {
     setIsEditing(!isEditing);
+    if (!isEditing) {
+      setUpdatedFields({});
+    }
   };
 
-  const createFormData = (data: Partial<Vehicle>): FormData => {
+  const createFormData = (): FormData => {
     const formData = new FormData();
-    Object.entries(data).forEach(([key, value]) => {
+    Object.entries(updatedFields).forEach(([key, value]) => {
       if (value !== null && value !== undefined) {
         formData.append(key, value.toString());
       }
     });
-    if (vehicleImage) {
-      formData.append("vehicleImage", vehicleImage);
-    }
-    if (rcImage) {
-      formData.append("rc", rcImage);
-    }
+    if (drivingLicenceImage)
+      formData.append("drivingLicence", drivingLicenceImage);
+    if (rcImage) formData.append("rc", rcImage);
+    if (panCardImage) formData.append("panCard", panCardImage);
+    if (aadharCardImage) formData.append("aadharCard", aadharCardImage);
     return formData;
-  };
-
-  const toggleVerify = async () => {
-    if (!vehicleData) return;
-
-    try {
-      const newVerificationStatus = !vehicleData.isVerified;
-      const formData = createFormData({
-        ...vehicleData,
-        isVerified: newVerificationStatus,
-      });
-      const updatedVehicle = await updateVehicle(vehicleId as string, formData);
-      if (updatedVehicle) {
-        setVehicleData(updatedVehicle);
-      } else {
-        console.error(
-          `Failed to ${newVerificationStatus ? "verify" : "unverify"} vehicle: No data returned`,
-        );
-      }
-    } catch (err) {
-      console.error(
-        `Failed to ${vehicleData.isVerified ? "unverify" : "verify"} vehicle:`,
-        err,
-      );
-    }
   };
 
   const handleUpdate = async () => {
     if (!vehicleData) return;
 
-    const formData = createFormData(vehicleData);
+    const formData = createFormData();
 
     try {
       const updatedVehicle = await updateVehicle(vehicleId as string, formData);
       if (updatedVehicle) {
         setVehicleData(updatedVehicle);
         setIsEditing(false);
-        setVehicleImage(null);
+        setDrivingLicenceImage(null);
         setRcImage(null);
+        setPanCardImage(null);
+        setAadharCardImage(null);
+        setUpdatedFields({});
       } else {
         console.error("Failed to update vehicle: No data returned");
       }
@@ -118,23 +114,10 @@ export default function VehicleInfo() {
   if (!vehicleData) return <div>No vehicle data found</div>;
 
   return (
-    <div className="max-w-3xl mx-auto bg-white rounded-lg shadow-md p-6">
+    <div className="max-w-5xl mx-auto bg-white rounded-lg shadow-md p-6">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Vehicle Detail</h2>
-        <div className="flex space-x-2">
-          {vehicleData.isVerified ? (
-            <CheckCircle
-              className="h-8 w-8 text-green-500 cursor-pointer"
-              aria-label="Verified"
-              onClick={toggleVerify}
-            />
-          ) : (
-            <XCircle
-              className="h-8 w-8 text-red-500 cursor-pointer"
-              aria-label="Not Verified"
-              onClick={toggleVerify}
-            />
-          )}
+        <div>
           {isEditing ? (
             <Check
               className="h-8 w-8 text-blue-500 cursor-pointer"
@@ -190,35 +173,78 @@ export default function VehicleInfo() {
         </div>
 
         <div className="mb-6">
-          <ImageComponent
-            title="Vehicle Image"
-            imageUrl={vehicleData.vehicleImage || "/api/placeholder/400/320"}
+          <SelectField
+            label="Verified Status"
+            name="isVerified"
+            options={["true", "false"]}
+            value={vehicleData.isVerified?.toString() ?? "false"}
+            onChange={handleSelectChange}
+            readOnly={!isEditing}
           />
-          {isEditing && (
-            <InputField
-              label="Upload New Vehicle Image"
-              name="vehicleImage"
-              type="file"
-              value={vehicleData.vehicleImage ?? ""}
-              onChange={handleImageChange}
-            />
-          )}
         </div>
 
-        <div className="mb-6">
-          <ImageComponent
-            title="Vehicle Registration Document"
-            imageUrl={vehicleData.rc || "/api/placeholder/400/320"}
-          />
-          {isEditing && (
-            <InputField
-              label="Upload New RC Document"
-              name="rc"
-              value={vehicleData.rc}
-              type="file"
-              onChange={handleImageChange}
+        <div className="grid grid-cols-2 gap-6 mb-6">
+          <div>
+            <ImageComponent
+              title="Driving Licence"
+              imageUrl={
+                vehicleData.drivingLicence || "/api/placeholder/400/320"
+              }
             />
-          )}
+            {isEditing && (
+              <InputField
+                label="Upload New Driving Licence"
+                name="drivingLicence"
+                type="file"
+                onChange={handleImageChange}
+              />
+            )}
+          </div>
+          <div>
+            <ImageComponent
+              title="RC Document"
+              imageUrl={vehicleData.rc || "/api/placeholder/400/320"}
+            />
+            {isEditing && (
+              <InputField
+                label="Upload New RC Document"
+                name="rc"
+                type="file"
+                onChange={handleImageChange}
+              />
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-6 mb-6">
+          <div>
+            <ImageComponent
+              title="PAN Card"
+              imageUrl={vehicleData.panCard || "/api/placeholder/400/320"}
+            />
+            {isEditing && (
+              <InputField
+                label="Upload New PAN Card"
+                name="panCard"
+                type="file"
+                onChange={handleImageChange}
+              />
+            )}
+          </div>
+          <div>
+            <ImageComponent
+              title="Aadhar Card"
+              imageUrl={vehicleData.aadharCard || "/api/placeholder/400/320"}
+            />
+            {isEditing && (
+              <InputField
+                label="Upload New Aadhar Card"
+                name="aadharCard"
+                type="file"
+                onChange={handleImageChange}
+              />
+            )}
+          </div>
         </div>
       </form>
     </div>

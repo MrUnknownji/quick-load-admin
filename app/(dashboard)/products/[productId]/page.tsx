@@ -4,7 +4,7 @@ import { useParams } from "next/navigation";
 import InputField from "@/components/form-components/InputField";
 import SelectField from "@/components/form-components/SelectField";
 import ImageComponent from "@/components/form-components/ImageComponent";
-import { CheckCircle, XCircle, Edit, Check } from "lucide-react";
+import { Edit, Check } from "lucide-react";
 import { useFetchProductById, useUpdateProduct } from "@/hooks/useFetchProduct";
 import { Product } from "@/types/Product";
 import LoadingComponent from "@/components/form-components/LoadingComponent";
@@ -16,6 +16,7 @@ export default function ProductInfo() {
   const [isEditing, setIsEditing] = useState(false);
   const [productData, setProductData] = useState<Product | null>(null);
   const [productImage, setProductImage] = useState<File | null>(null);
+  const [updatedFields, setUpdatedFields] = useState<Partial<Product>>({});
   const productTypes = ["Bajri", "Bricks", "Grit", "Cement"];
 
   useEffect(() => {
@@ -29,6 +30,7 @@ export default function ProductInfo() {
     setProductData((prevData) =>
       prevData ? { ...prevData, [name]: value } : null,
     );
+    setUpdatedFields((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -36,6 +38,7 @@ export default function ProductInfo() {
     setProductData((prevData) =>
       prevData ? { ...prevData, [name]: value } : null,
     );
+    setUpdatedFields((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -46,11 +49,14 @@ export default function ProductInfo() {
 
   const toggleEdit = () => {
     setIsEditing(!isEditing);
+    if (!isEditing) {
+      setUpdatedFields({});
+    }
   };
 
-  const createFormData = (data: Partial<Product>): FormData => {
+  const createFormData = (): FormData => {
     const formData = new FormData();
-    Object.entries(data).forEach(([key, value]) => {
+    Object.entries(updatedFields).forEach(([key, value]) => {
       if (value !== null && value !== undefined) {
         formData.append(key, value.toString());
       }
@@ -61,35 +67,10 @@ export default function ProductInfo() {
     return formData;
   };
 
-  const toggleVerify = async () => {
-    if (!productData) return;
-
-    try {
-      const newVerificationStatus = !productData.isVerified;
-      const formData = createFormData({
-        ...productData,
-        isVerified: newVerificationStatus,
-      });
-      const updatedProduct = await updateProduct(productId as string, formData);
-      if (updatedProduct) {
-        setProductData(updatedProduct);
-      } else {
-        console.error(
-          `Failed to ${newVerificationStatus ? "verify" : "unverify"} product: No data returned`,
-        );
-      }
-    } catch (err) {
-      console.error(
-        `Failed to ${productData.isVerified ? "unverify" : "verify"} product:`,
-        err,
-      );
-    }
-  };
-
   const handleUpdate = async () => {
     if (!productData) return;
 
-    const formData = createFormData(productData);
+    const formData = createFormData();
 
     try {
       const updatedProduct = await updateProduct(productId as string, formData);
@@ -97,6 +78,7 @@ export default function ProductInfo() {
         setProductData(updatedProduct);
         setIsEditing(false);
         setProductImage(null);
+        setUpdatedFields({});
       } else {
         console.error("Failed to update product: No data returned");
       }
@@ -110,23 +92,10 @@ export default function ProductInfo() {
   if (!productData) return <div>No product data found</div>;
 
   return (
-    <div className="max-w-3xl mx-auto bg-white rounded-lg shadow-md p-6">
+    <div className="max-w-5xl mx-auto bg-white rounded-lg shadow-md p-6">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Product Detail</h2>
-        <div className="flex space-x-2">
-          {productData.isVerified ? (
-            <CheckCircle
-              className="h-8 w-8 text-green-500 cursor-pointer"
-              aria-label="Verified"
-              onClick={toggleVerify}
-            />
-          ) : (
-            <XCircle
-              className="h-8 w-8 text-red-500 cursor-pointer"
-              aria-label="Not Verified"
-              onClick={toggleVerify}
-            />
-          )}
+        <div>
           {isEditing ? (
             <Check
               className="h-8 w-8 text-blue-500 cursor-pointer"
@@ -198,9 +167,6 @@ export default function ProductInfo() {
             onChange={handleInputChange}
             readOnly={!isEditing}
           />
-        </div>
-
-        <div className="mb-6">
           <InputField
             label="Product Details"
             name="productDetails"
@@ -208,6 +174,14 @@ export default function ProductInfo() {
             value={productData.productDetails}
             onChange={handleInputChange}
             readOnly={!isEditing}
+          />
+          <SelectField
+            label="Verified"
+            name="isVerified"
+            options={["true", "false"]}
+            value={productData.isVerified.toString()}
+            readOnly={!isEditing}
+            onChange={handleSelectChange}
           />
         </div>
 
@@ -220,7 +194,6 @@ export default function ProductInfo() {
             <InputField
               label="Upload New Product Image"
               name="productImage"
-              value={productData.productImage}
               type="file"
               onChange={handleImageChange}
             />

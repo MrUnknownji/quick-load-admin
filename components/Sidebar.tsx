@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faHome,
   faUsers,
-  faBox,
+  faShop,
   faTruck,
   faShip,
   faClipboardList,
@@ -12,6 +12,7 @@ import {
   faSignOutAlt,
   faTimes,
   faBell,
+  faBox,
 } from "@fortawesome/free-solid-svg-icons";
 import Image from "next/image";
 
@@ -33,6 +34,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     { name: "Users", icon: faUsers, path: "/users" },
     { name: "Notifications", icon: faBell, path: "/notifications" },
     { name: "Products", icon: faBox, path: "/products" },
+    { name: "Product Owners", icon: faShop, path: "/product-owners" },
     { name: "Vehicles", icon: faTruck, path: "/vehicles" },
     { name: "Transports", icon: faShip, path: "/transports" },
     { name: "Orders", icon: faClipboardList, path: "/orders" },
