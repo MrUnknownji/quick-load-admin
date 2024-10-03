@@ -8,6 +8,7 @@ import { Edit, Check } from "lucide-react";
 import { useFetchProductById, useUpdateProduct } from "@/hooks/useFetchProduct";
 import { Product } from "@/types/Product";
 import LoadingComponent from "@/components/form-components/LoadingComponent";
+import { useRouter } from "next/navigation";
 
 type UpdatedFields = Partial<Omit<Product, "productImage">> & {
   productImage?: File;
@@ -23,6 +24,7 @@ export default function ProductInfo() {
   const productTypes = ["Bajri", "Bricks", "Grit", "Cement"];
   const [updating, setUpdating] = useState(false);
   const [imageError, setImageError] = useState("");
+  const router = useRouter();
 
   useEffect(() => {
     if (product) {
@@ -118,6 +120,7 @@ export default function ProductInfo() {
         setProductData(updatedProduct);
         setIsEditing(false);
         setUpdatedFields({});
+        router.back();
       } else {
         console.error("Failed to update product: No data returned");
       }

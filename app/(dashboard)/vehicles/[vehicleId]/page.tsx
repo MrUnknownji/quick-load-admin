@@ -8,6 +8,7 @@ import { Edit, Check } from "lucide-react";
 import { useFetchVehicleById, useUpdateVehicle } from "@/hooks/useFetchVehicle";
 import { Vehicle } from "@/types/Vehicle";
 import LoadingComponent from "@/components/form-components/LoadingComponent";
+import { useRouter } from "next/navigation";
 
 type UpdatedFields = Partial<
   Omit<Vehicle, "drivingLicence" | "rc" | "panCard" | "aadharCard">
@@ -32,6 +33,7 @@ export default function VehicleInfo() {
     panCard: "",
     aadharCard: "",
   });
+  const router = useRouter();
 
   useEffect(() => {
     if (vehicle) {
@@ -139,6 +141,7 @@ export default function VehicleInfo() {
         setVehicleData(updatedVehicle);
         setIsEditing(false);
         setUpdatedFields({});
+        router.back();
       } else {
         console.error("Failed to update vehicle: No data returned");
       }

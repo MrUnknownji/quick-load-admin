@@ -8,6 +8,7 @@ import { Edit, Check } from "lucide-react";
 import { useUser } from "@/hooks/useUser";
 import { User } from "@/types/User";
 import LoadingComponent from "@/components/form-components/LoadingComponent";
+import { useRouter } from "next/navigation";
 
 type UpdatedFields = Partial<Omit<User, "aadharCard" | "panCard">> & {
   aadharCard?: File | string;
@@ -28,6 +29,7 @@ const UserInfo = () => {
     aadharCard: "",
     panCard: "",
   });
+  const router = useRouter();
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -145,6 +147,7 @@ const UserInfo = () => {
       setIsEditing(false);
       setUpdatedFields({});
       setError(null);
+      router.back();
     } catch (err) {
       setError("Failed to update user information");
       console.error(err);

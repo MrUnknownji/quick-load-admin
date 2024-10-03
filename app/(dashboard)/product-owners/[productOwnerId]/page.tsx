@@ -11,6 +11,7 @@ import {
 } from "@/hooks/useFetchProduct";
 import { ProductOwner } from "@/types/Product";
 import LoadingComponent from "@/components/form-components/LoadingComponent";
+import { useRouter } from "next/navigation";
 
 const PRODUCT_TYPES = ["Bajri", "Bricks", "Grit", "Cement"];
 
@@ -27,6 +28,7 @@ export default function ProductOwnerInfo() {
   const [updatedFields, setUpdatedFields] = useState<UpdatedFields>({});
   const [updating, setUpdating] = useState(false);
   const [imageError, setImageError] = useState("");
+  const router = useRouter();
 
   useEffect(() => {
     if (productOwners.length > 0) {
@@ -74,7 +76,7 @@ export default function ProductOwnerInfo() {
 
   const validateFile = useCallback((file: File) => {
     const validTypes = ["image/jpeg", "image/png", "image/svg+xml"];
-    const maxSize = 5 * 1024 * 1024; // 5 MB
+    const maxSize = 5 * 1024 * 1024;
 
     if (!validTypes.includes(file.type)) {
       setImageError(
@@ -151,6 +153,7 @@ export default function ProductOwnerInfo() {
         setOwnerData(updatedOwner);
         setIsEditing(false);
         setUpdatedFields({});
+        router.back();
       } else {
         console.error("Failed to update product owner: No data returned");
       }
