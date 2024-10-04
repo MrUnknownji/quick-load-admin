@@ -141,10 +141,10 @@ export default function VehicleInfo() {
         setVehicleData(updatedVehicle);
         setIsEditing(false);
         setUpdatedFields({});
-        router.back();
       } else {
         console.error("Failed to update vehicle: No data returned");
       }
+      router.back();
     } catch (err) {
       console.error("Failed to update vehicle information:", err);
     } finally {
@@ -159,7 +159,7 @@ export default function VehicleInfo() {
   return (
     <div className="max-w-5xl mx-auto bg-white rounded-lg shadow-md p-6">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Vehicle Detail</h2>
+        <h2 className="text-2xl font-bold">Vehicle Details</h2>
         <div>
           {isEditing ? (
             <Check

@@ -190,7 +190,7 @@ export default function ProductOwnerInfo() {
   return (
     <div className="max-w-5xl mx-auto bg-white rounded-lg shadow-md p-6">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Product Owner Detail</h2>
+        <h2 className="text-2xl font-bold">Product Owner Details</h2>
         <div className="cursor-pointer">
           {isEditing ? (
             <Check

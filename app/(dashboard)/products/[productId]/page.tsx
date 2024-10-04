@@ -138,7 +138,7 @@ export default function ProductInfo() {
   return (
     <div className="max-w-5xl mx-auto bg-white rounded-lg shadow-md p-6">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Product Detail</h2>
+        <h2 className="text-2xl font-bold">Product Details</h2>
         <div>
           {isEditing ? (
             <Check

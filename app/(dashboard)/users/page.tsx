@@ -7,6 +7,7 @@ import {
   X,
   SortAsc,
   SortDesc,
+  AlertCircle,
 } from "lucide-react";
 import Link from "next/link";
 import { useUser } from "@/hooks/useUser";
@@ -34,11 +35,15 @@ const UsersPage: React.FC = () => {
   const [selectedTab, setSelectedTab] = useState("All User");
   const [currentPage, setCurrentPage] = useState(1);
   const [sortByVerified, setSortByVerified] = useState<"asc" | "desc">("asc");
+  const userTypes = ["All User", "Merchant", "Driver", "Merchant-Driver"];
 
   useEffect(() => {
     const fetchUsers = async () => {
       const fetchedUsers = await getUsers();
-      setUsers(fetchedUsers);
+      const filteredUsers = fetchedUsers.filter(
+        (user) => user.type !== "admin",
+      );
+      setUsers(filteredUsers);
     };
     fetchUsers();
   }, [getUsers]);
@@ -67,11 +72,10 @@ const UsersPage: React.FC = () => {
   const totalPages = Math.ceil(filteredUsers.length / 10);
 
   if (loading) return <LoadingComponent />;
-  if (error) return <div>Error: {error}</div>;
 
   return (
-    <div className="p-6 min-h-screen animate-fadeIn">
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-6">
+    <div className="p-4 min-h-screen animate-fadeIn">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
         <UserCard title="All User" count={users.length} />
         <UserCard
           title="Verified"
@@ -83,48 +87,53 @@ const UsersPage: React.FC = () => {
         />
       </div>
 
-      <div className="bg-white rounded-lg shadow p-4 sm:p-6 animate-slideUp">
-        <div className="flex flex-wrap gap-2 mb-4">
-          {["All User", "Merchant", "Driver", "Merchant-Driver"].map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setSelectedTab(tab)}
-              className={`px-4 py-2 rounded-md flex items-center transition-all duration-300 ease-in-out ${
-                selectedTab === tab
-                  ? "bg-[var(--color-primary)] text-white scale-105"
-                  : "text-gray-600 hover:bg-gray-100"
-              }`}
-            >
-              {tab}
-              {selectedTab === tab && tab !== "All User" && (
-                <div className="ml-2 bg-white rounded-full p-1">
-                  <X
-                    size={14}
-                    className="text-[var(--color-primary)] cursor-pointer"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedTab("All User");
-                    }}
-                  />
-                </div>
-              )}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex justify-end mb-4">
+      <div className="bg-white rounded-lg shadow p-4 animate-slideUp">
+        {error && (
+          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded flex items-center">
+            <AlertCircle className="mr-2" size={20} />
+            <span>Error: {error}</span>
+          </div>
+        )}
+        <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2">
+            {userTypes.map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setSelectedTab(tab)}
+                className={`px-3 py-1 rounded-md flex items-center transition-all duration-300 ease-in-out ${
+                  selectedTab === tab
+                    ? "bg-[var(--color-primary)] text-white scale-105"
+                    : "text-gray-600 hover:bg-gray-100"
+                }`}
+              >
+                {tab}
+                {selectedTab === tab && tab !== "All User" && (
+                  <div className="ml-2 bg-white rounded-full p-1">
+                    <X
+                      size={12}
+                      className="text-[var(--color-primary)] cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedTab("All User");
+                      }}
+                    />
+                  </div>
+                )}
+              </button>
+            ))}
+          </div>
           <button
             onClick={() =>
               setSortByVerified((prev) => (prev === "asc" ? "desc" : "asc"))
             }
-            className="flex items-center px-4 py-2 bg-gray-100 rounded-md hover:bg-gray-200"
+            className="flex items-center px-3 py-1 bg-gray-100 rounded-md hover:bg-gray-200"
           >
             {sortByVerified === "asc" ? (
-              <SortAsc size={18} />
+              <SortAsc size={16} />
             ) : (
-              <SortDesc size={18} />
+              <SortDesc size={16} />
             )}
-            <span className="ml-2">Sort by Verified</span>
+            <span className="ml-1 text-sm">Sort by Verified</span>
           </button>
         </div>
 
@@ -140,8 +149,8 @@ const UsersPage: React.FC = () => {
 };
 
 const UserCard: React.FC<UserCardProps> = ({ title, count }) => (
-  <div className="bg-white p-6 rounded-lg shadow text-center border border-gray-200 transition-all duration-200 ease-in-out transform hover:scale-105">
-    <h2 className="text-3xl font-bold text-[var(--color-primary)] mb-2 animate-fadeInUp">
+  <div className="bg-white p-4 rounded-lg shadow text-center border border-gray-200 transition-all duration-200 ease-in-out transform hover:scale-105">
+    <h2 className="text-2xl font-bold text-[var(--color-primary)] mb-1 animate-fadeInUp">
       {count}
     </h2>
     <p className="text-sm text-gray-600">{title}</p>
