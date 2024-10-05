@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPhone, faLock } from "@fortawesome/free-solid-svg-icons";
@@ -19,6 +19,8 @@ const LoginPage: React.FC = () => {
   const [showOtpInput, setShowOtpInput] = useState(false);
   const router = useRouter();
   const { login } = useUser();
+  const phoneInputRef = useRef<HTMLInputElement>(null);
+  const otpInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const recaptchaId = "recaptcha-container";
@@ -49,7 +51,7 @@ const LoginPage: React.FC = () => {
     setOtp(value);
   };
 
-  const handleSendOtp = async () => {
+  const handleSendOtp = useCallback(async () => {
     try {
       const phoneNumberWithCountryCode = `+91${phoneNumber}`;
       const recaptchaVerifier = initializeRecaptcha("recaptcha-container");
@@ -64,31 +66,82 @@ const LoginPage: React.FC = () => {
       console.error("Error sending OTP:", err);
       setError("Failed to send OTP. Please try again.");
     }
-  };
+  }, [phoneNumber]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      setError("");
 
-    try {
-      const credential = PhoneAuthProvider.credential(verificationId, otp);
-      const result = await signInWithCredential(auth, credential);
-      const firebaseUser = result.user;
-      const idToken = await firebaseUser.getIdToken();
+      try {
+        const credential = PhoneAuthProvider.credential(verificationId, otp);
+        const result = await signInWithCredential(auth, credential);
+        const firebaseUser = result.user;
+        const idToken = await firebaseUser.getIdToken();
 
-      const userData = await login(idToken);
-      if (userData && userData.accessToken) {
-        localStorage.setItem("accessToken", userData.accessToken);
-        localStorage.setItem("refreshToken", userData.refreshToken);
-        router.push("/dashboard");
-      } else {
-        setError("Failed to authenticate. Please try again.");
+        const userData = await login(idToken);
+        if (userData && userData.accessToken) {
+          localStorage.setItem("accessToken", userData.accessToken);
+          localStorage.setItem("refreshToken", userData.refreshToken);
+          router.push("/dashboard");
+        } else {
+          setError("Failed to authenticate. Please try again.");
+        }
+      } catch (err) {
+        console.error("Login error:", err);
+        setError("Invalid OTP or authentication failed. Please try again.");
       }
-    } catch (err) {
-      console.error("Login error:", err);
-      setError("Invalid OTP or authentication failed. Please try again.");
+    },
+    [verificationId, otp, login, router],
+  );
+
+  const handlePhoneNumberSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (phoneNumber.length === 10) {
+      handleSendOtp();
     }
   };
+
+  const handleOtpSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (otp.length === 6) {
+      handleSubmit(e);
+    }
+  };
+
+  useEffect(() => {
+    const handlePhoneKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Enter" && phoneNumber.length === 10 && !showOtpInput) {
+        handleSendOtp();
+      }
+    };
+
+    const handleOtpKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Enter" && otp.length === 6 && showOtpInput) {
+        handleSubmit(e as unknown as React.FormEvent);
+      }
+    };
+
+    const phoneInput = phoneInputRef.current;
+    const otpInput = otpInputRef.current;
+
+    if (phoneInput) {
+      phoneInput.addEventListener("keydown", handlePhoneKeyDown);
+    }
+
+    if (otpInput) {
+      otpInput.addEventListener("keydown", handleOtpKeyDown);
+    }
+
+    return () => {
+      if (phoneInput) {
+        phoneInput.removeEventListener("keydown", handlePhoneKeyDown);
+      }
+      if (otpInput) {
+        otpInput.removeEventListener("keydown", handleOtpKeyDown);
+      }
+    };
+  }, [phoneNumber, otp, showOtpInput, handleSendOtp, handleSubmit]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#3c0b0b] to-[#4c1b1b]">
@@ -109,7 +162,9 @@ const LoginPage: React.FC = () => {
         {error && (
           <div className="mb-4 text-red-500 text-sm text-center">{error}</div>
         )}
-        <form onSubmit={handleSubmit}>
+        <form
+          onSubmit={showOtpInput ? handleOtpSubmit : handlePhoneNumberSubmit}
+        >
           <div className="mb-4">
             <label
               htmlFor="phoneNumber"
@@ -121,6 +176,7 @@ const LoginPage: React.FC = () => {
               <input
                 type="tel"
                 id="phoneNumber"
+                ref={phoneInputRef}
                 className="w-full pl-10 pr-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#3c0b0b] focus:border-transparent"
                 value={phoneNumber}
                 onChange={handlePhoneNumberChange}
@@ -134,8 +190,7 @@ const LoginPage: React.FC = () => {
           </div>
           {!showOtpInput && (
             <button
-              type="button"
-              onClick={handleSendOtp}
+              type="submit"
               className={`w-full font-semibold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3c0b0b] focus:ring-opacity-50 transition duration-300 ease-in-out ${
                 phoneNumber.length === 10
                   ? "bg-[#3c0b0b] text-white hover:bg-[#4c1b1b]"
@@ -158,6 +213,7 @@ const LoginPage: React.FC = () => {
                 <input
                   type="text"
                   id="otp"
+                  ref={otpInputRef}
                   className="w-full pl-10 pr-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#3c0b0b] focus:border-transparent"
                   value={otp}
                   onChange={handleOtpChange}
