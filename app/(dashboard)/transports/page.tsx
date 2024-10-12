@@ -64,8 +64,8 @@ const TransportsPage: React.FC = () => {
 
   const sortedAndPaginatedTransports = useMemo(() => {
     const sorted = [...filteredTransports].sort((a, b) => {
-      const nameA = a.userId.name.toLowerCase();
-      const nameB = b.userId.name.toLowerCase();
+      const nameA = a.userId.firstName.toLowerCase();
+      const nameB = b.userId.firstName.toLowerCase();
       if (sortByName === "asc") {
         return nameA.localeCompare(nameB);
       } else {
@@ -203,10 +203,10 @@ const TransportTable: React.FC<TransportTableProps> = ({
         <thead>
           <tr className="border-b">
             <th className="text-left p-2">Name</th>
-            <th className="text-left p-2">Email</th>
             <th className="text-left p-2">From</th>
             <th className="text-left p-2">To</th>
             <th className="text-left p-2">Vehicle</th>
+            <th className="text-left p-2">Location</th>
           </tr>
         </thead>
         <tbody>
@@ -215,8 +215,7 @@ const TransportTable: React.FC<TransportTableProps> = ({
               key={index}
               className="border-b hover:bg-gray-50 animate-fadeIn"
             >
-              <td className="p-2">{transport.userId.name}</td>
-              <td className="p-2">{transport.userId.email}</td>
+              <td className="p-2">{`${transport.userId.firstName} ${transport.userId.LastName ?? ""}`}</td>
               <td className="p-2">{transport.from}</td>
               <td className="p-2">{transport.to}</td>
               <td className="p-2">
@@ -224,6 +223,7 @@ const TransportTable: React.FC<TransportTableProps> = ({
                   ? transport.selfVehicle
                   : transport.vehicle}
               </td>
+              <td className="p-2">{transport.location ?? ""}</td>
             </tr>
           ))}
         </tbody>

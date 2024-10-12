@@ -19,6 +19,7 @@ export interface User {
   address: string;
   isActivated: boolean;
   isVerified: boolean;
+  location: string;
   deviceId: string;
   platform: "android" | "ios";
   deletedAt: string | null;

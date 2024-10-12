@@ -64,6 +64,7 @@ const LoginPage: React.FC = () => {
       setShowOtpInput(true);
     } catch (err) {
       console.error("Error sending OTP:", err);
+      console.log(JSON.stringify(err));
       setError("Failed to send OTP. Please try again.");
     }
   }, [phoneNumber]);
@@ -78,6 +79,7 @@ const LoginPage: React.FC = () => {
         const result = await signInWithCredential(auth, credential);
         const firebaseUser = result.user;
         const idToken = await firebaseUser.getIdToken();
+        console.log("ID token:", idToken);
 
         const userData = await login(idToken);
         if (userData && userData.accessToken) {
@@ -147,6 +149,7 @@ const LoginPage: React.FC = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#3c0b0b] to-[#4c1b1b]">
       <div className="bg-white p-8 rounded-lg shadow-xl w-96">
         <div className="flex justify-center mb-6">
+          <div id="recaptcha-container" />
           <div className="h-24 w-24 relative">
             <Image
               src="/images/logo-light.png"
@@ -159,9 +162,6 @@ const LoginPage: React.FC = () => {
         <h1 className="text-2xl font-bold mb-6 text-center text-[#3c0b0b]">
           Admin Login
         </h1>
-        {error && (
-          <div className="mb-4 text-red-500 text-sm text-center">{error}</div>
-        )}
         <form
           onSubmit={showOtpInput ? handleOtpSubmit : handlePhoneNumberSubmit}
         >

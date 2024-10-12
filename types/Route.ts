@@ -7,22 +7,24 @@ export interface Route {
 
 export interface Driver {
   userId: {
-    name: string;
-    email: string;
+    firstName: string;
+    LastName?: string;
   };
   from: string;
   to: string;
   selfVehicle: string;
+  location?: string;
 }
 
 export interface Merchant {
   userId: {
-    name: string;
-    email: string;
+    firstName: string;
+    LastName?: string;
   };
   from: string;
   to: string;
   vehicle: string;
+  location?: string;
 }
 
 export interface ApiResponse<T> {

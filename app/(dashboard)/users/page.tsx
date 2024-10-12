@@ -166,6 +166,7 @@ const UserTable: React.FC<UserTableProps> = ({ users }) => (
           <th className="text-left p-2">Role</th>
           <th className="text-left p-2">Phone Number</th>
           <th className="text-left p-2">Address/City</th>
+          <th className="text-left p-2">Location</th>
           <th className="text-left p-2">Is Verified</th>
           <th className="text-left p-2">View</th>
         </tr>
@@ -187,6 +188,7 @@ const UserTable: React.FC<UserTableProps> = ({ users }) => (
             <td className="p-2">
               {user.address}, {user.city}
             </td>
+            <td className="p-2">{user.location}</td>s
             <td className="p-2">{user.isVerified ? "Yes" : "No"}</td>
             <td className="p-2">
               <Link
