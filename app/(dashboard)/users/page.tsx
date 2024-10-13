@@ -186,9 +186,9 @@ const UserTable: React.FC<UserTableProps> = ({ users }) => (
             <td className="p-2">{user.type}</td>
             <td className="p-2">{user.phone}</td>
             <td className="p-2">
-              {user.address}, {user.city}
+              {user.address ?? "null"}, {user.city ?? "null"}
             </td>
-            <td className="p-2">{user.location}</td>s
+            <td className="p-2">{user.location}</td>
             <td className="p-2">{user.isVerified ? "Yes" : "No"}</td>
             <td className="p-2">
               <Link
