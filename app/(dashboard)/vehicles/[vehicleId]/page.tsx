@@ -141,15 +141,14 @@ export default function VehicleInfo() {
         setVehicleData(updatedVehicle);
         setIsEditing(false);
         setUpdatedFields({});
-        router.push("/vehicles");
       } else {
         console.error("Failed to update vehicle: No data returned");
       }
-      router.back();
     } catch (err) {
       console.error("Failed to update vehicle information:", err);
     } finally {
       setUpdating(false);
+      router.back();
     }
   };
 
