@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPhone, faLock } from "@fortawesome/free-solid-svg-icons";
+import { faPhone, faLock, faSpinner } from "@fortawesome/free-solid-svg-icons";
 import Image from "next/image";
 import { useUser } from "@/hooks/useUser";
 import { auth, initializeRecaptcha } from "@/firebase/firebaseConfig";
@@ -17,6 +17,7 @@ const LoginPage: React.FC = () => {
   const [error, setError] = useState("");
   const [verificationId, setVerificationId] = useState("");
   const [showOtpInput, setShowOtpInput] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { login } = useUser();
   const phoneInputRef = useRef<HTMLInputElement>(null);
@@ -52,6 +53,7 @@ const LoginPage: React.FC = () => {
   };
 
   const handleSendOtp = useCallback(async () => {
+    setIsLoading(true);
     try {
       const phoneNumberWithCountryCode = `+91${phoneNumber}`;
       const recaptchaVerifier = initializeRecaptcha("recaptcha-container");
@@ -66,6 +68,8 @@ const LoginPage: React.FC = () => {
       console.error("Error sending OTP:", err);
       console.log(JSON.stringify(err));
       setError("Failed to send OTP. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   }, [phoneNumber]);
 
@@ -73,6 +77,7 @@ const LoginPage: React.FC = () => {
     async (e: React.FormEvent) => {
       e.preventDefault();
       setError("");
+      setIsLoading(true);
 
       try {
         const credential = PhoneAuthProvider.credential(verificationId, otp);
@@ -90,6 +95,8 @@ const LoginPage: React.FC = () => {
       } catch (err) {
         console.error("Login error:", err);
         setError("Invalid OTP or authentication failed. Please try again.");
+      } finally {
+        setIsLoading(false);
       }
     },
     [verificationId, otp, login, router],
@@ -190,52 +197,60 @@ const LoginPage: React.FC = () => {
             <button
               type="submit"
               className={`w-full font-semibold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3c0b0b] focus:ring-opacity-50 transition duration-300 ease-in-out ${
-                phoneNumber.length === 10
+                phoneNumber.length === 10 && !isLoading
                   ? "bg-[#3c0b0b] text-white hover:bg-[#4c1b1b]"
                   : "bg-gray-300 text-gray-500 cursor-not-allowed"
               }`}
-              disabled={phoneNumber.length !== 10}
+              disabled={phoneNumber.length !== 10 || isLoading}
             >
-              Send OTP
+              {isLoading ? (
+                <FontAwesomeIcon icon={faSpinner} spin />
+              ) : (
+                "Send OTP"
+              )}
             </button>
           )}
           {showOtpInput && (
-            <div className="mb-6">
-              <label
-                htmlFor="otp"
-                className="block mb-2 text-sm font-medium text-gray-700"
-              >
-                OTP
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  id="otp"
-                  ref={otpInputRef}
-                  className="w-full pl-10 pr-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#3c0b0b] focus:border-transparent"
-                  value={otp}
-                  onChange={handleOtpChange}
-                  required
-                />
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FontAwesomeIcon icon={faLock} className="text-gray-400" />
+            <>
+              <div className="mb-6">
+                <label
+                  htmlFor="otp"
+                  className="block mb-2 text-sm font-medium text-gray-700"
+                >
+                  OTP
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    id="otp"
+                    ref={otpInputRef}
+                    className="w-full pl-10 pr-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#3c0b0b] focus:border-transparent"
+                    value={otp}
+                    onChange={handleOtpChange}
+                    required
+                  />
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <FontAwesomeIcon icon={faLock} className="text-gray-400" />
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
-          {showOtpInput && (
-            <button
-              type="submit"
-              id="sign-in-button"
-              className={`w-full font-semibold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3c0b0b] focus:ring-opacity-50 transition duration-300 ease-in-out ${
-                otp.length === 6
-                  ? "bg-[#3c0b0b] text-white hover:bg-[#4c1b1b]"
-                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
-              }`}
-              disabled={otp.length !== 6}
-            >
-              Log In
-            </button>
+              <button
+                type="submit"
+                id="sign-in-button"
+                className={`w-full font-semibold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3c0b0b] focus:ring-opacity-50 transition duration-300 ease-in-out ${
+                  otp.length === 6 && !isLoading
+                    ? "bg-[#3c0b0b] text-white hover:bg-[#4c1b1b]"
+                    : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                }`}
+                disabled={otp.length !== 6 || isLoading}
+              >
+                {isLoading ? (
+                  <FontAwesomeIcon icon={faSpinner} spin />
+                ) : (
+                  "Log In"
+                )}
+              </button>
+            </>
           )}
         </form>
         {error && (
