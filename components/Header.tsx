@@ -100,7 +100,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
               />
             </div>
             <div className="ml-2 hidden md:block">
-              <p className="text-sm font-semibold">John Doe</p>
+              <p className="text-sm font-semibold">Manish</p>
               <p className="text-xs text-gray-600">Admin</p>
             </div>
           </div>

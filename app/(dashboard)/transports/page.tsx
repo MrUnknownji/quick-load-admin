@@ -205,6 +205,7 @@ const TransportTable: React.FC<TransportTableProps> = ({
             <th className="text-left p-2">Name</th>
             <th className="text-left p-2">From</th>
             <th className="text-left p-2">To</th>
+            <th className="text-left p-2">Phone</th>
             <th className="text-left p-2">Vehicle</th>
             <th className="text-left p-2">Location</th>
           </tr>
@@ -218,12 +219,17 @@ const TransportTable: React.FC<TransportTableProps> = ({
               <td className="p-2">{`${transport.userId.firstName} ${transport.userId.LastName ?? ""}`}</td>
               <td className="p-2">{transport.from}</td>
               <td className="p-2">{transport.to}</td>
+              <td className="p-2">{transport.phoneNumber}</td>
               <td className="p-2">
-                {"selfVehicle" in transport
+                {"selfVehicle" in transport && transport.selfVehicle !== null
                   ? transport.selfVehicle
-                  : transport.vehicle}
+                  : "vehicle" in transport
+                    ? transport.vehicle
+                    : "Any"}
               </td>
-              <td className="p-2">{transport.location ?? ""}</td>
+              <td className="p-2">
+                {transport.userLocation ?? "Not available"}
+              </td>
             </tr>
           ))}
         </tbody>

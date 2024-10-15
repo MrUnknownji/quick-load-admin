@@ -10,10 +10,12 @@ export interface Driver {
     firstName: string;
     LastName?: string;
   };
+  userLocation: string;
   from: string;
   to: string;
   selfVehicle: string;
-  location?: string;
+  userType: "driver" | "merchant-driver";
+  phoneNumber: string;
 }
 
 export interface Merchant {
@@ -24,7 +26,9 @@ export interface Merchant {
   from: string;
   to: string;
   vehicle: string;
-  location?: string;
+  userLocation: string;
+  userType: "merchant" | "merchant-driver";
+  phoneNumber: "string";
 }
 
 export interface ApiResponse<T> {
