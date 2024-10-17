@@ -4,7 +4,7 @@ import { useParams } from "next/navigation";
 import InputField from "@/components/form-components/InputField";
 import SelectField from "@/components/form-components/SelectField";
 import ImageComponent from "@/components/form-components/ImageComponent";
-import { Edit, Check } from "lucide-react";
+import { Edit, Check, Trash } from "lucide-react";
 import { useUser } from "@/hooks/useUser";
 import { User } from "@/types/User";
 import LoadingComponent from "@/components/form-components/LoadingComponent";
@@ -18,7 +18,7 @@ type UpdatedFields = Partial<Omit<User, "aadharCard" | "panCard">> & {
 
 const UserInfo = () => {
   const { userId } = useParams();
-  const { getUser, updateProfile } = useUser();
+  const { getUser, updateProfile, deleteAccount } = useUser();
   const [isEditing, setIsEditing] = useState(false);
   const [userData, setUserData] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -156,6 +156,19 @@ const UserInfo = () => {
     }
   };
 
+  const handleDelete = async () => {
+    setUpdating(true);
+    try {
+      const deletedUser = await deleteAccount(userId as string);
+      console.log("Deleted user is: ", deletedUser);
+      router.back();
+    } catch (err) {
+      console.log("Error while deleting user: ", err);
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   if (loading) return <LoadingComponent />;
   if (error) return <div>Error: {error}</div>;
   if (!userData) return <div>No user data found</div>;
@@ -164,7 +177,12 @@ const UserInfo = () => {
     <div className="max-w-5xl mx-auto bg-white rounded-lg shadow-md p-6">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">User Details</h2>
-        <div>
+        <div className="flex flex-row gap-5">
+          <Trash
+            className="h-8 w-8 text-red-500 cursor-pointer"
+            aria-label="Delete"
+            onClick={handleDelete}
+          />
           {isEditing ? (
             <Check
               className={`h-8 w-8 ${
@@ -266,7 +284,7 @@ const UserInfo = () => {
               title="Aadhar Card"
               imageUrl={
                 userData.aadharCard
-                  ? `https://quick-load.onrender.com/${userData.aadharCard}`
+                  ? `http://movingrolls.online${userData.aadharCard}`
                   : "/api/placeholder/400/320"
               }
               onFileChange={isEditing ? handleImageChange : undefined}
@@ -277,7 +295,7 @@ const UserInfo = () => {
               title="PAN Card"
               imageUrl={
                 userData.panCard
-                  ? `https://quick-load.onrender.com/${userData.panCard}`
+                  ? `http://movingrolls.online${userData.panCard}`
                   : "/api/placeholder/400/320"
               }
               onFileChange={isEditing ? handleImageChange : undefined}
