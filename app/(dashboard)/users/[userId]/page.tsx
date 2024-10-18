@@ -284,7 +284,7 @@ const UserInfo = () => {
               title="Aadhar Card"
               imageUrl={
                 userData.aadharCard
-                  ? `http://movingrolls.online${userData.aadharCard}`
+                  ? `https://movingrolls.online${userData.aadharCard}`
                   : "/api/placeholder/400/320"
               }
               onFileChange={isEditing ? handleImageChange : undefined}
@@ -295,7 +295,7 @@ const UserInfo = () => {
               title="PAN Card"
               imageUrl={
                 userData.panCard
-                  ? `http://movingrolls.online${userData.panCard}`
+                  ? `https://movingrolls.online${userData.panCard}`
                   : "/api/placeholder/400/320"
               }
               onFileChange={isEditing ? handleImageChange : undefined}

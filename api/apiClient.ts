@@ -6,7 +6,7 @@ import axios, {
 } from "axios";
 import { useRouter } from "next/router";
 
-const baseURL = "http://movingrolls.online/api";
+const baseURL = "https://movingrolls.online/api";
 
 const apiClient: AxiosInstance = axios.create({
   baseURL,

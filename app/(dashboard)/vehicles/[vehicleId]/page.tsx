@@ -233,7 +233,7 @@ export default function VehicleInfo() {
           <ImageComponent
             title="Driving Licence"
             imageUrl={
-              `http://movingrolls.online${vehicleData.drivingLicence}` ||
+              `https://movingrolls.online${vehicleData.drivingLicence}` ||
               "/api/placeholder/400/320"
             }
             onFileChange={isEditing ? handleImageChange : undefined}
@@ -243,7 +243,7 @@ export default function VehicleInfo() {
           <ImageComponent
             title="RC Document"
             imageUrl={
-              `http://movingrolls.online${vehicleData.rc}` ||
+              `https://movingrolls.online${vehicleData.rc}` ||
               "/api/placeholder/400/320"
             }
             onFileChange={isEditing ? handleImageChange : undefined}
@@ -256,7 +256,7 @@ export default function VehicleInfo() {
           <ImageComponent
             title="PAN Card"
             imageUrl={
-              `http://movingrolls.online${vehicleData.panCard}` ||
+              `https://movingrolls.online${vehicleData.panCard}` ||
               "/api/placeholder/400/320"
             }
             onFileChange={isEditing ? handleImageChange : undefined}
@@ -266,7 +266,7 @@ export default function VehicleInfo() {
           <ImageComponent
             title="Aadhar Card"
             imageUrl={
-              `http://movingrolls.online${vehicleData.aadharCard}` ||
+              `https://movingrolls.online${vehicleData.aadharCard}` ||
               "/api/placeholder/400/320"
             }
             onFileChange={isEditing ? handleImageChange : undefined}
